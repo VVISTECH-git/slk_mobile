@@ -80,13 +80,8 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
-      # Codemagic-managed automatic signing (same as the LEAP/DockMate apps):
-      # it creates + owns the distribution certificate and App Store profile via
-      # the App Store Connect API key. Needs the bundle ID registered + app record
-      # created in App Store Connect (both done).
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.vvistech.slkMobile
+      vars:
+        BUNDLE_ID: "com.vvistech.slkMobile"
     scripts:
       - name: Flutter packages
         script: flutter pub get
@@ -95,12 +90,29 @@ workflows:
         script: flutter analyze --no-fatal-infos --no-fatal-warnings
       - name: Install CocoaPods
         script: find . -name "Podfile" -execdir pod install \;
-      - name: Set up code signing
-        script: xcode-project use-profiles
-      - name: Build IPA
+      - name: Set up code signing (create cert + App Store profile)
+        # Create a NEW distribution certificate (now that a slot is free) that
+        # this machine owns the private key for, then CREATE the App Store
+        # provisioning profile for the bundle id and load both into the keychain.
         script: |
-          flutter build ipa --release \
-            --export-options-plist=/Users/builder/export_options.plist
+          keychain initialize
+          app-store-connect create-certificate \
+            --type IOS_DISTRIBUTION \
+            --save
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+          keychain add-certificates
+          echo "── Signing identities in keychain: ──"
+          security find-identity -v -p codesigning
+          xcode-project use-profiles
+      - name: Build IPA
+        # xcode-project build-ipa archives with the manual profile and skips
+        # Flutter's bogus development-certificate pre-check.
+        script: |
+          xcode-project build-ipa \
+            --workspace ios/Runner.xcworkspace \
+            --scheme Runner
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
