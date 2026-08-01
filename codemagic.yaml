@@ -95,6 +95,7 @@ workflows:
         # this machine owns the private key for, then CREATE the App Store
         # provisioning profile for the bundle id and load both into the keychain.
         script: |
+          set -x
           keychain initialize
           app-store-connect create-certificate \
             --type IOS_DISTRIBUTION \
@@ -103,9 +104,12 @@ workflows:
             --type IOS_APP_STORE \
             --create
           keychain add-certificates
-          echo "── Signing identities in keychain: ──"
+          echo "══════ CERTIFICATES / IDENTITIES IN KEYCHAIN ══════"
           security find-identity -v -p codesigning
-          xcode-project use-profiles
+          echo "══════ PROVISIONING PROFILES ON DISK ══════"
+          ls -la "$HOME/Library/MobileDevice/Provisioning Profiles/" || echo "(none)"
+          echo "══════ APPLYING PROFILES TO PROJECT ══════"
+          xcode-project use-profiles --verbose
       - name: Build IPA
         # xcode-project build-ipa archives with the manual profile and skips
         # Flutter's bogus development-certificate pre-check.
