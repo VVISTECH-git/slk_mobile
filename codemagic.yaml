@@ -110,11 +110,10 @@ workflows:
           security find-identity -v -p codesigning || true
           xcode-project use-profiles
       - name: Build IPA
-        # Use Codemagic's builder (not `flutter build ipa`) — it respects the
-        # profiles from use-profiles and skips Flutter's bogus "development
-        # certificate" pre-check that fails on a distribution-only setup.
+        # Use Codemagic's builder (not `flutter build ipa`) — it archives with
+        # the manual profile set by use-profiles and skips Flutter's bogus
+        # "development certificate" pre-check that fails on a distribution build.
         script: |
-          flutter build ios --release --no-codesign
           xcode-project build-ipa \
             --workspace ios/Runner.xcworkspace \
             --scheme Runner
