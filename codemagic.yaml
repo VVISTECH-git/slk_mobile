@@ -21,7 +21,9 @@ workflows:
   # =========================================================================
   android-workflow:
     name: Android (APK + AAB)
-    instance_type: linux_x2
+    # mac_mini_m2 is what the account's plan allows (same instance the other
+    # VVIS apps build on). Android builds fine on macOS instances.
+    instance_type: mac_mini_m2
     max_build_duration: 60
     environment:
       flutter: stable
