@@ -71,7 +71,11 @@ workflows:
   # iOS — signed IPA → TestFlight (runs on a Mac, so it works from Windows too)
   # =========================================================================
   ios-workflow:
-    name: iOS (TestFlight)
+    name: iOS (Ad Hoc)
+    # Mirrors the DockMate/LEAP setup that already works on this account:
+    # Codemagic-managed AUTOMATIC signing with an AD HOC distribution profile
+    # (installs on registered devices; not TestFlight). Uses the same
+    # "VVIS Codemagic" App Store Connect key.
     instance_type: mac_mini_m2
     max_build_duration: 90
     integrations:
@@ -80,8 +84,9 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
-      vars:
-        BUNDLE_ID: "com.vvistech.slkMobile"
+      ios_signing:
+        distribution_type: ad_hoc
+        bundle_identifier: com.vvistech.slkMobile
     scripts:
       - name: Flutter packages
         script: flutter pub get
@@ -90,29 +95,9 @@ workflows:
         script: flutter analyze --no-fatal-infos --no-fatal-warnings
       - name: Install CocoaPods
         script: find . -name "Podfile" -execdir pod install \;
-      - name: Set up code signing (create cert + App Store profile)
-        # Create a NEW distribution certificate (now that a slot is free) that
-        # this machine owns the private key for, then CREATE the App Store
-        # provisioning profile for the bundle id and load both into the keychain.
-        script: |
-          set -x
-          keychain initialize
-          app-store-connect create-certificate \
-            --type IOS_DISTRIBUTION \
-            --save
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --create
-          keychain add-certificates
-          echo "══════ CERTIFICATES / IDENTITIES IN KEYCHAIN ══════"
-          security find-identity -v -p codesigning
-          echo "══════ PROVISIONING PROFILES ON DISK ══════"
-          ls -la "$HOME/Library/MobileDevice/Provisioning Profiles/" || echo "(none)"
-          echo "══════ APPLYING PROFILES TO PROJECT ══════"
-          xcode-project use-profiles --verbose
+      - name: Set up code signing
+        script: xcode-project use-profiles
       - name: Build IPA
-        # Codemagic's canonical recipe: use-profiles writes the export-options
-        # plist and applies the profile; flutter build ipa archives + exports.
         script: |
           flutter build ipa --release \
             --export-options-plist=/Users/builder/export_options.plist
@@ -126,7 +111,3 @@ workflows:
         notify:
           success: true
           failure: true
-      app_store_connect:
-        auth: integration
-        submit_to_testflight: true
-        # submit_to_app_store: false
