@@ -95,16 +95,21 @@ workflows:
       - name: Install CocoaPods
         script: find . -name "Podfile" -execdir pod install \;
       - name: Set up code signing
-        # 1) Explicitly create a distribution certificate we own the private key
-        #    for, and import it. 2) Create the App Store profile (it includes that
-        #    cert). 3) Wire the profile into the Xcode project.
+        # The CLI can't create a certificate without a private key ("Cannot
+        # create resource without certificate private key"). So: generate an RSA
+        # key, create the distribution cert WITH it, then create the App Store
+        # profile with the same key, import to the keychain, and wire it up.
         script: |
-          set -x
+          set -ex
           keychain initialize
-          app-store-connect create-certificate --type IOS_DISTRIBUTION --save
-          keychain add-certificates
+          openssl genrsa -out /tmp/cert_key.pem 2048
+          app-store-connect certificates create \
+            --type IOS_DISTRIBUTION \
+            --certificate-key=@file:/tmp/cert_key.pem \
+            --save
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
+            --certificate-key=@file:/tmp/cert_key.pem \
             --create
           keychain add-certificates
           echo "══ signing identities in keychain ══"
