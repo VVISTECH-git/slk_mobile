@@ -95,15 +95,20 @@ workflows:
       - name: Install CocoaPods
         script: find . -name "Podfile" -execdir pod install \;
       - name: Set up code signing
-        # ONE clean command: fetch-signing-files --create makes a consistent
-        # certificate + App Store profile pair (a slot is now free), imports the
-        # cert to the keychain, and use-profiles wires it into the project.
+        # 1) Explicitly create a distribution certificate we own the private key
+        #    for, and import it. 2) Create the App Store profile (it includes that
+        #    cert). 3) Wire the profile into the Xcode project.
         script: |
+          set -x
           keychain initialize
+          app-store-connect create-certificate --type IOS_DISTRIBUTION --save
+          keychain add-certificates
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --create
           keychain add-certificates
+          echo "══ signing identities in keychain ══"
+          security find-identity -v -p codesigning
           xcode-project use-profiles
       - name: Build IPA
         script: |
