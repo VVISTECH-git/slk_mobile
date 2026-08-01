@@ -111,12 +111,11 @@ workflows:
           echo "══════ APPLYING PROFILES TO PROJECT ══════"
           xcode-project use-profiles --verbose
       - name: Build IPA
-        # xcode-project build-ipa archives with the manual profile and skips
-        # Flutter's bogus development-certificate pre-check.
+        # Codemagic's canonical recipe: use-profiles writes the export-options
+        # plist and applies the profile; flutter build ipa archives + exports.
         script: |
-          xcode-project build-ipa \
-            --workspace ios/Runner.xcworkspace \
-            --scheme Runner
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
