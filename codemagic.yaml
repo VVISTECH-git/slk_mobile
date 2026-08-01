@@ -80,8 +80,13 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
-      vars:
-        BUNDLE_ID: "com.vvistech.slkMobile"
+      # Codemagic-managed automatic signing (same as the LEAP/DockMate apps):
+      # it creates + owns the distribution certificate and App Store profile via
+      # the App Store Connect API key. Needs the bundle ID registered + app record
+      # created in App Store Connect (both done).
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.vvistech.slkMobile
     scripts:
       - name: Flutter packages
         script: flutter pub get
@@ -90,33 +95,12 @@ workflows:
         script: flutter analyze --no-fatal-infos --no-fatal-warnings
       - name: Install CocoaPods
         script: find . -name "Podfile" -execdir pod install \;
-      - name: Set up code signing (create cert + profile)
-        # Create a BRAND-NEW iOS Distribution certificate that this machine owns
-        # the private key for. (Existing certs were made in Xcode on a Mac, so
-        # Codemagic can't sign with them.) Then create the App Store profile and
-        # load everything into the keychain.
-        # NOTE: if this errors with "maximum number of certificates", revoke one
-        # unused "Apple Distribution" cert at developer.apple.com → Certificates.
-        script: |
-          keychain initialize
-          app-store-connect create-certificate \
-            --type IOS_DISTRIBUTION \
-            --save || echo "WARN: certificate create skipped (may already exist / at Apple limit)"
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --create
-          keychain add-certificates
-          echo "── Signing identities in keychain: ──"
-          security find-identity -v -p codesigning || true
-          xcode-project use-profiles
+      - name: Set up code signing
+        script: xcode-project use-profiles
       - name: Build IPA
-        # Use Codemagic's builder (not `flutter build ipa`) — it archives with
-        # the manual profile set by use-profiles and skips Flutter's bogus
-        # "development certificate" pre-check that fails on a distribution build.
         script: |
-          xcode-project build-ipa \
-            --workspace ios/Runner.xcworkspace \
-            --scheme Runner
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
