@@ -101,16 +101,23 @@ workflows:
           keychain initialize
           app-store-connect create-certificate \
             --type IOS_DISTRIBUTION \
-            --save
+            --save || echo "WARN: certificate create skipped (may already exist / at Apple limit)"
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --create
           keychain add-certificates
+          echo "── Signing identities in keychain: ──"
+          security find-identity -v -p codesigning || true
           xcode-project use-profiles
       - name: Build IPA
+        # Use Codemagic's builder (not `flutter build ipa`) — it respects the
+        # profiles from use-profiles and skips Flutter's bogus "development
+        # certificate" pre-check that fails on a distribution-only setup.
         script: |
-          flutter build ipa --release \
-            --export-options-plist=/Users/builder/export_options.plist
+          flutter build ios --release --no-codesign
+          xcode-project build-ipa \
+            --workspace ios/Runner.xcworkspace \
+            --scheme Runner
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
