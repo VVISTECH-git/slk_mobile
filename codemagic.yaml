@@ -80,9 +80,8 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.vvistech.slkMobile
+      vars:
+        BUNDLE_ID: "com.vvistech.slkMobile"
     scripts:
       - name: Flutter packages
         script: flutter pub get
@@ -91,8 +90,17 @@ workflows:
         script: flutter analyze --no-fatal-infos --no-fatal-warnings
       - name: Install CocoaPods
         script: find . -name "Podfile" -execdir pod install \;
-      - name: Set up code signing
-        script: xcode-project use-profiles
+      - name: Set up code signing (create cert + profile if missing)
+        # Explicitly fetch-or-CREATE the distribution certificate + App Store
+        # provisioning profile via the App Store Connect API key. --create makes
+        # Codemagic generate them if they don't exist yet (first iOS build).
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
       - name: Build IPA
         script: |
           flutter build ipa --release \
