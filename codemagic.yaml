@@ -1,0 +1,107 @@
+# Codemagic CI/CD for SLK Mobile (Flutter).
+# ---------------------------------------------------------------------------
+# Two workflows: Android (APK + AAB) and iOS (IPA → TestFlight). The app points
+# at the live API by default (lib/core/config.dart → Render URL); override per
+# build with --dart-define=API_BASE_URL=... if you need staging.
+#
+# ONE-TIME SETUP in the Codemagic UI (nothing here needs your password in the repo):
+#   • Connect this GitHub repo to a Codemagic app.
+#   • Android signing: Teams → Code signing identities → Android keystores →
+#     upload upload-keystore.jks, and name the reference  slk_keystore
+#     (alias/passwords from when the keystore was created).
+#   • iOS signing: add an App Store Connect API key integration named
+#     slk_app_store_connect  (Integrations → App Store Connect).
+#   • Google Play (optional): add a service-account JSON, referenced below.
+#   • Set a real notification email under the `publishing` blocks if wanted.
+# ---------------------------------------------------------------------------
+
+workflows:
+  # =========================================================================
+  # ANDROID — signed APK + AAB, ready for Google Play
+  # =========================================================================
+  android-workflow:
+    name: Android (APK + AAB)
+    instance_type: linux_x2
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      java: 17
+      groups:
+        - slk_keystore # keystore reference created in the Codemagic UI
+    scripts:
+      - name: Flutter packages
+        script: flutter pub get
+      - name: Static analysis
+        script: flutter analyze
+      - name: Write key.properties from the Codemagic keystore
+        script: |
+          cat > "$CM_BUILD_DIR/android/key.properties" <<EOF
+          storePassword=$CM_KEYSTORE_PASSWORD
+          keyPassword=$CM_KEY_PASSWORD
+          keyAlias=$CM_KEY_ALIAS
+          storeFile=$CM_KEYSTORE_PATH
+          EOF
+      - name: Build APK + AAB
+        script: |
+          flutter build apk --release
+          flutter build appbundle --release
+    artifacts:
+      - build/**/outputs/apk/**/*.apk
+      - build/**/outputs/bundle/**/*.aab
+      - build/**/outputs/**/mapping.txt
+    publishing:
+      email:
+        recipients:
+          - bhanuboddu09@gmail.com
+        notify:
+          success: true
+          failure: true
+      # Uncomment once a Google Play service-account JSON is added in Codemagic:
+      # google_play:
+      #   credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+      #   track: internal
+      #   submit_as_draft: true
+
+  # =========================================================================
+  # iOS — signed IPA → TestFlight (runs on a Mac, so it works from Windows too)
+  # =========================================================================
+  ios-workflow:
+    name: iOS (TestFlight)
+    instance_type: mac_mini_m2
+    max_build_duration: 90
+    integrations:
+      app_store_connect: slk_app_store_connect # API-key integration name in the UI
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.vvistech.slkMobile
+    scripts:
+      - name: Flutter packages
+        script: flutter pub get
+      - name: Static analysis
+        script: flutter analyze
+      - name: Install CocoaPods
+        script: find . -name "Podfile" -execdir pod install \;
+      - name: Set up code signing
+        script: xcode-project use-profiles
+      - name: Build IPA
+        script: |
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      email:
+        recipients:
+          - bhanuboddu09@gmail.com
+        notify:
+          success: true
+          failure: true
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        # submit_to_app_store: false
