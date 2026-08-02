@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
 import '../../theme/app_theme.dart';
@@ -27,7 +30,19 @@ class ProductDetailScreen extends ConsumerWidget {
     });
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Product')),
+      appBar: AppBar(
+        title: const Text('Product'),
+        actions: [
+          IconButton(
+            tooltip: 'Edit',
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () async {
+              await context.push('/products/$productId/edit');
+              ref.invalidate(productDetailProvider(productId));
+            },
+          ),
+        ],
+      ),
       body: AsyncView<Map<String, dynamic>>(
         value: detail,
         onRetry: () => ref.invalidate(productDetailProvider(productId)),
@@ -129,6 +144,25 @@ class _VariantCard extends StatelessWidget {
               ],
             ),
             Text(v['sku'] as String, style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+            if ((v['images'] as List?)?.isNotEmpty ?? false) ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 72,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    for (final img in (v['images'] as List))
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.memory(base64Decode(img as String), height: 72, width: 72, fit: BoxFit.cover),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             Wrap(
               spacing: 14,

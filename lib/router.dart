@@ -10,6 +10,7 @@ import 'features/pos/checkout_screen.dart';
 import 'features/pos/pos_screen.dart';
 import 'features/products/products_screen.dart';
 import 'features/products/product_detail_screen.dart';
+import 'features/products/product_form_screen.dart';
 import 'features/stock/stock_screen.dart';
 import 'features/stock/movements_screen.dart';
 import 'features/transfers/transfers_screen.dart';
@@ -63,8 +64,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, state) => InvoiceScreen(invoiceId: state.pathParameters['id']!),
       ),
 
-      // Catalogue
+      // Catalogue ( /new before /:id so the static path wins )
       GoRoute(path: '/products', builder: (_, _) => const ProductsScreen()),
+      GoRoute(path: '/products/new', builder: (_, _) => const ProductFormScreen()),
+      GoRoute(
+        path: '/products/:id/edit',
+        builder: (_, state) => ProductFormScreen(productId: state.pathParameters['id']),
+      ),
       GoRoute(
         path: '/products/:id',
         builder: (_, state) => ProductDetailScreen(productId: state.pathParameters['id']!),

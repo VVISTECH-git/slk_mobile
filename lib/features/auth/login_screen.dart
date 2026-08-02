@@ -113,13 +113,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         const SizedBox(height: 20),
         DropdownButtonFormField<String>(
           initialValue: _staffId,
-          decoration: const InputDecoration(labelText: 'Staff member'),
+          decoration: const InputDecoration(
+            labelText: 'Staff member',
+            hintText: 'Select who is signing in',
+            floatingLabelBehavior: FloatingLabelBehavior.always,
+          ),
           items: staff
               .map((s) => DropdownMenuItem(
                     value: s['id'] as String,
                     child: Text(
                       '${s['name']}'
-                      '${s['storeName'] != null ? '  ·  ${s['storeName']}' : s['role'] == 'owner' ? '  ·  Owner' : ''}',
+                      '${s['storeName'] != null ? '  ·  ${s['storeName']}' : ''}',
                     ),
                   ))
               .toList(),
@@ -133,7 +137,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
             initialValue: _pickedStoreId,
-            decoration: const InputDecoration(labelText: 'Operate at store'),
+            decoration: const InputDecoration(
+              labelText: 'Operate at store',
+              hintText: 'Select a store',
+              floatingLabelBehavior: FloatingLabelBehavior.always,
+            ),
             items: stores
                 .map((s) => DropdownMenuItem(value: s['id'] as String, child: Text('${s['name']}')))
                 .toList(),
@@ -146,7 +154,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           keyboardType: TextInputType.number,
           obscureText: true,
           maxLength: 4,
-          decoration: const InputDecoration(labelText: 'PIN', counterText: ''),
+          decoration: const InputDecoration(
+            labelText: 'PIN',
+            hintText: 'Enter your 4-digit PIN',
+            counterText: '',
+            floatingLabelBehavior: FloatingLabelBehavior.always,
+          ),
           onSubmitted: (_) => _submit(),
         ),
         const SizedBox(height: 20),

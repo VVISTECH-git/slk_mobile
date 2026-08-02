@@ -32,6 +32,16 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          await context.push('/products/new');
+          ref.invalidate(productsProvider);
+        },
+        backgroundColor: AppColors.terracotta,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text('New product'),
+      ),
       body: Column(
         children: [
           Padding(

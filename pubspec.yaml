@@ -2,7 +2,7 @@ name: slk_mobile
 description: "Sree Lakshmi Kalamkari — inventory & billing (mobile)."
 publish_to: 'none'
 
-version: 1.0.0+2
+version: 1.0.0+3
 
 environment:
   sdk: ^3.11.1
@@ -28,6 +28,9 @@ dependencies:
   # Barcode / QR scanning (POS + stock)
   mobile_scanner: ^6.0.2
 
+  # Product photos (camera + gallery)
+  image_picker: ^1.1.2
+
   # Tax-invoice PDF + print/share
   pdf: ^3.11.1
   printing: ^5.13.4
@@ -44,8 +47,9 @@ dev_dependencies:
 
   flutter_lints: ^6.0.0
 
-  # Icon generation
+  # Icon + splash generation
   flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.4
   image: ^4.3.0
 
 flutter:
@@ -58,3 +62,10 @@ flutter_launcher_icons:
   image_path: "assets/icon/app_icon.png"
   adaptive_icon_background: "#B5533B"
   adaptive_icon_foreground: "assets/icon/app_icon_fg.png"
+
+flutter_native_splash:
+  color: "#B5533B" # terracotta brand background
+  image: assets/icon/splash_logo.png
+  android_12:
+    color: "#B5533B"
+    image: assets/icon/splash_logo.png
