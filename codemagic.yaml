@@ -129,7 +129,8 @@ workflows:
         notify:
           success: true
           failure: true
-      # Upload to TestFlight (assign internal testers in App Store Connect after).
+      # Upload to TestFlight for INTERNAL testers (no external beta review, which
+      # would require extra contact info). Internal testers can install as soon
+      # as the build finishes processing.
       app_store_connect:
         auth: integration
-        submit_to_testflight: true
