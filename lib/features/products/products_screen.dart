@@ -27,6 +27,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
         title: const Text('Products'),
         actions: [
           IconButton(
+            tooltip: 'Refresh',
             onPressed: () => ref.invalidate(productsProvider),
             icon: const Icon(Icons.refresh),
           ),

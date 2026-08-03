@@ -19,6 +19,18 @@ class SlkApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       routerConfig: router,
+      // On wide screens (tablets/foldables) keep the UI in a comfortable
+      // phone-width column rather than stretching edge to edge.
+      builder: (context, child) {
+        final width = MediaQuery.sizeOf(context).width;
+        if (width <= 720 || child == null) return child ?? const SizedBox.shrink();
+        return ColoredBox(
+          color: const Color(0xFFE7DDD0),
+          child: Center(
+            child: SizedBox(width: 600, child: child),
+          ),
+        );
+      },
     );
   }
 }

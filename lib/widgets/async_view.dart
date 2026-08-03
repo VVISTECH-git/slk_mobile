@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../theme/app_theme.dart';
+import 'skeleton.dart';
 
 /// Renders an [AsyncValue] with consistent loading / error / empty states so
 /// every screen behaves the same. [onRetry] re-runs the underlying provider.
@@ -13,6 +14,7 @@ class AsyncView<T> extends StatelessWidget {
     this.onRetry,
     this.isEmpty,
     this.emptyMessage = 'Nothing here yet.',
+    this.loading,
   });
 
   final AsyncValue<T> value;
@@ -20,11 +22,12 @@ class AsyncView<T> extends StatelessWidget {
   final VoidCallback? onRetry;
   final bool Function(T data)? isEmpty;
   final String emptyMessage;
+  final Widget? loading;
 
   @override
   Widget build(BuildContext context) {
     return value.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => loading ?? const SkeletonList(),
       error: (err, _) => _ErrorState(message: '$err', onRetry: onRetry),
       data: (d) {
         if (isEmpty != null && isEmpty!(d)) {

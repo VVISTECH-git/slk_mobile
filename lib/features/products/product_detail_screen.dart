@@ -156,7 +156,8 @@ class _VariantCard extends StatelessWidget {
                         padding: const EdgeInsets.only(right: 6),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.memory(base64Decode(img as String), height: 72, width: 72, fit: BoxFit.cover),
+                          child: Image.memory(base64Decode(img as String),
+                              height: 72, width: 72, fit: BoxFit.cover, cacheWidth: 200, cacheHeight: 200),
                         ),
                       ),
                   ],

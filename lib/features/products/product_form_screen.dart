@@ -537,7 +537,8 @@ class _VariantCard extends StatelessWidget {
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(10),
-                            child: Image.memory(base64Decode(variant.images[j]), height: 84, width: 84, fit: BoxFit.cover),
+                            child: Image.memory(base64Decode(variant.images[j]),
+                                height: 84, width: 84, fit: BoxFit.cover, cacheWidth: 220, cacheHeight: 220),
                           ),
                           Positioned(
                             top: -6,

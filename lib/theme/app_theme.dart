@@ -76,11 +76,37 @@ class AppTheme {
           textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
         ),
       ),
-      textTheme: base.textTheme.apply(
-        bodyColor: AppColors.ink,
-        displayColor: AppColors.ink,
-      ),
+      textTheme: base.textTheme
+          .copyWith(
+            titleLarge: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.2),
+            titleMedium: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            bodyLarge: const TextStyle(fontSize: 15, height: 1.35),
+            bodyMedium: const TextStyle(fontSize: 14, height: 1.35),
+            bodySmall: const TextStyle(fontSize: 12, color: AppColors.inkSoft, height: 1.3),
+            labelLarge: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          )
+          .apply(bodyColor: AppColors.ink, displayColor: AppColors.ink),
       dividerColor: AppColors.border,
+      splashFactory: InkSparkle.splashFactory,
     );
   }
 }
+
+/// Spacing tokens — use instead of scattering magic numbers.
+class Gaps {
+  static const h4 = SizedBox(height: 4);
+  static const h8 = SizedBox(height: 8);
+  static const h12 = SizedBox(height: 12);
+  static const h16 = SizedBox(height: 16);
+  static const h24 = SizedBox(height: 24);
+  static const w8 = SizedBox(width: 8);
+  static const w12 = SizedBox(width: 12);
+}
+
+/// Corner-radius tokens.
+class Radii {
+  static const sm = 8.0;
+  static const md = 12.0;
+  static const lg = 16.0;
+}
+
