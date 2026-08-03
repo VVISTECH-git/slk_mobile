@@ -33,7 +33,13 @@ class InvoiceScreen extends ConsumerWidget {
         actions: const [ThemeButton()],
         title: Text(justCreated ? 'Sale complete' : 'Invoice'),
         leading: justCreated
-            ? IconButton(icon: const Icon(Icons.close), onPressed: () => context.go('/pos'))
+            ? IconButton(
+                icon: const Icon(Icons.close),
+                // Pop back to the till (kept under this route by the checkout's
+                // pushReplacement) so the home hub stays reachable. `go('/pos')`
+                // would reset the stack and strip POS's back button.
+                onPressed: () => context.canPop() ? context.pop() : context.go('/'),
+              )
             : null,
       ),
       body: AsyncView<InvoiceFull>(
