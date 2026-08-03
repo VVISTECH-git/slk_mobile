@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/async_view.dart';
+import '../../widgets/theme_button.dart';
 import 'auth_controller.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -58,38 +60,54 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: context.p.surface1,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: FutureBuilder<Map<String, dynamic>>(
-                future: _optionsFuture,
-                builder: (context, snap) {
-                  if (snap.connectionState == ConnectionState.waiting) {
-                    return const Padding(
-                      padding: EdgeInsets.all(40),
-                      child: CircularProgressIndicator(),
-                    );
-                  }
-                  if (snap.hasError) {
-                    return _ErrorRetry(
-                      message: '${snap.error}',
-                      onRetry: () => setState(() {
-                        _optionsFuture =
-                            ref.read(authControllerProvider.notifier).loginOptions();
-                      }),
-                    );
-                  }
-                  final staff = (snap.data!['staff'] as List).cast<Map<String, dynamic>>();
-                  final stores = (snap.data!['stores'] as List).cast<Map<String, dynamic>>();
-                  return _form(staff, stores);
-                },
+    // No AppBar here, so set the status-bar icon brightness ourselves — dark
+    // icons on the light themes, light icons on Dark — otherwise the clock is
+    // invisible against the cream background.
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final overlay = (isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark)
+        .copyWith(statusBarColor: Colors.transparent);
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: overlay,
+      child: Scaffold(
+        backgroundColor: context.p.surface1,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: FutureBuilder<Map<String, dynamic>>(
+                      future: _optionsFuture,
+                      builder: (context, snap) {
+                        if (snap.connectionState == ConnectionState.waiting) {
+                          return const Padding(
+                            padding: EdgeInsets.all(40),
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        if (snap.hasError) {
+                          return _ErrorRetry(
+                            message: '${snap.error}',
+                            onRetry: () => setState(() {
+                              _optionsFuture =
+                                  ref.read(authControllerProvider.notifier).loginOptions();
+                            }),
+                          );
+                        }
+                        final staff = (snap.data!['staff'] as List).cast<Map<String, dynamic>>();
+                        final stores = (snap.data!['stores'] as List).cast<Map<String, dynamic>>();
+                        return _form(staff, stores);
+                      },
+                    ),
+                  ),
+                ),
               ),
-            ),
+              // App-wide theme switch is also reachable here, before sign-in.
+              const Positioned(top: 0, right: 4, child: ThemeButton()),
+            ],
           ),
         ),
       ),

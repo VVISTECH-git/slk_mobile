@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme/app_theme.dart';
 import 'theme_button.dart';
@@ -13,7 +14,9 @@ class PlaceholderScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        actions: const [ThemeButton()],title: Text(title)),
+        title: Text(title),
+        actions: const [ThemeButton()],
+      ),
       body: Center(
         child: Padding(
           padding: EdgeInsets.all(24),
@@ -36,9 +39,15 @@ class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: context.p.surface1,
-      body: Center(child: CircularProgressIndicator()),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final overlay = (isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark)
+        .copyWith(statusBarColor: Colors.transparent);
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: overlay,
+      child: Scaffold(
+        backgroundColor: context.p.surface1,
+        body: const Center(child: CircularProgressIndicator()),
+      ),
     );
   }
 }
