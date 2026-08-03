@@ -39,10 +39,10 @@ class DashboardScreen extends ConsumerWidget {
               crossAxisSpacing: 12,
               childAspectRatio: 1.5,
               children: [
-                _Kpi(label: 'Retail value', value: money0((d['retailValue'] as num?) ?? 0), icon: Icons.savings_outlined, color: AppColors.terracotta),
-                _Kpi(label: 'Units in stock', value: '${d['totalUnits'] ?? 0}', icon: Icons.inventory_2_outlined, color: AppColors.success),
-                _Kpi(label: 'Products', value: '${d['activeCount'] ?? 0}/${d['productCount'] ?? 0} active', icon: Icons.category_outlined, color: AppColors.gold),
-                _Kpi(label: 'Low stock', value: '${d['lowStockCount'] ?? 0}', icon: Icons.warning_amber_rounded, color: AppColors.danger),
+                _Kpi(label: 'Retail value', value: money0((d['retailValue'] as num?) ?? 0), icon: Icons.savings_outlined, color: context.p.primary),
+                _Kpi(label: 'Units in stock', value: '${d['totalUnits'] ?? 0}', icon: Icons.inventory_2_outlined, color: context.p.success),
+                _Kpi(label: 'Products', value: '${d['activeCount'] ?? 0}/${d['productCount'] ?? 0} active', icon: Icons.category_outlined, color: context.p.accent),
+                _Kpi(label: 'Low stock', value: '${d['lowStockCount'] ?? 0}', icon: Icons.warning_amber_rounded, color: context.p.danger),
               ],
             ),
             const SizedBox(height: 20),
@@ -72,9 +72,9 @@ class _Kpi extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.p.surface2,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.p.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,8 +84,8 @@ class _Kpi extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.ink)),
-              Text(label, style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+              Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.p.text)),
+              Text(label, style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
             ],
           ),
         ],
@@ -116,7 +116,7 @@ class _StockByLocation extends StatelessWidget {
   final List rows;
   @override
   Widget build(BuildContext context) {
-    if (rows.isEmpty) return const Text('No locations.', style: TextStyle(color: AppColors.inkSoft));
+    if (rows.isEmpty) return Text('No locations.', style: TextStyle(color: context.p.textSecondary));
     return Column(
       children: rows.map((r) {
         final m = (r as Map);
@@ -127,7 +127,7 @@ class _StockByLocation extends StatelessWidget {
             children: [
               Row(children: [
                 Icon(m['type'] == 'warehouse' ? Icons.warehouse_outlined : Icons.storefront_outlined,
-                    size: 18, color: AppColors.inkSoft),
+                    size: 18, color: context.p.textSecondary),
                 const SizedBox(width: 8),
                 Text('${m['name']}'),
               ]),
@@ -158,12 +158,12 @@ class _LowStock extends StatelessWidget {
                   children: [
                     Text('${m['productName']}', style: const TextStyle(fontWeight: FontWeight.w600)),
                     Text('${m['sku']} · ${m['locationName']}',
-                        style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+                        style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
                   ],
                 ),
               ),
               Text('${m['onHand']} / ${m['reorder']}',
-                  style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.danger)),
+                  style: TextStyle(fontWeight: FontWeight.w700, color: context.p.danger)),
             ],
           ),
         );
@@ -177,7 +177,7 @@ class _Recent extends StatelessWidget {
   final List rows;
   @override
   Widget build(BuildContext context) {
-    if (rows.isEmpty) return const Text('No recent activity.', style: TextStyle(color: AppColors.inkSoft));
+    if (rows.isEmpty) return Text('No recent activity.', style: TextStyle(color: context.p.textSecondary));
     return Column(
       children: rows.map((r) {
         final m = (r as Map);
@@ -191,7 +191,7 @@ class _Recent extends StatelessWidget {
                   children: [
                     Text('${m['productName']}', style: const TextStyle(fontWeight: FontWeight.w600)),
                     Text('${m['type']} · ${m['createdAt']}',
-                        style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+                        style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
                   ],
                 ),
               ),

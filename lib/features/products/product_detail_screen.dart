@@ -61,7 +61,7 @@ class ProductDetailScreen extends ConsumerWidget {
                           style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 4),
                       Text((p['productCode'] ?? '') as String,
-                          style: const TextStyle(color: AppColors.inkSoft)),
+                          style: TextStyle(color: context.p.textSecondary)),
                       if (((p['description'] ?? '') as String).isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Text(p['description'] as String),
@@ -71,13 +71,13 @@ class ProductDetailScreen extends ConsumerWidget {
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          _tag('Status', (p['status'] ?? '') as String),
+                          _tag(context, 'Status', (p['status'] ?? '') as String),
                           if (((p['hsnCode'] ?? '') as String).isNotEmpty)
-                            _tag('HSN', p['hsnCode'] as String),
+                            _tag(context, 'HSN', p['hsnCode'] as String),
                           if (((p['gstRate'] ?? '') as String).isNotEmpty)
-                            _tag('GST', '${p['gstRate']}%'),
+                            _tag(context, 'GST', '${p['gstRate']}%'),
                           if (((p['unitType'] ?? '') as String).isNotEmpty)
-                            _tag('Unit', p['unitType'] as String),
+                            _tag(context, 'Unit', p['unitType'] as String),
                         ],
                       ),
                     ],
@@ -97,13 +97,13 @@ class ProductDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _tag(String label, String value) {
+  Widget _tag(BuildContext context, String label, String value) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: AppColors.cream,
+        color: context.p.surface1,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.p.border),
       ),
       child: Text('$label: $value', style: const TextStyle(fontSize: 12)),
     );
@@ -140,10 +140,10 @@ class _VariantCard extends StatelessWidget {
                 Text('$total in stock',
                     style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: total <= 3 ? AppColors.danger : AppColors.ink)),
+                        color: total <= 3 ? context.p.danger : context.p.text)),
               ],
             ),
-            Text(v['sku'] as String, style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+            Text(v['sku'] as String, style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
             if ((v['images'] as List?)?.isNotEmpty ?? false) ...[
               const SizedBox(height: 8),
               SizedBox(
@@ -169,11 +169,11 @@ class _VariantCard extends StatelessWidget {
               spacing: 14,
               children: [
                 if (((v['b2c'] ?? '') as String).isNotEmpty)
-                  _price('Retail', double.tryParse(v['b2c'] as String)),
+                  _price(context, 'Retail', double.tryParse(v['b2c'] as String)),
                 if (((v['cost'] ?? '') as String).isNotEmpty)
-                  _price('Cost', double.tryParse(v['cost'] as String)),
+                  _price(context, 'Cost', double.tryParse(v['cost'] as String)),
                 if (((v['b2b'] ?? '') as String).isNotEmpty)
-                  _price('B2B', double.tryParse(v['b2b'] as String)),
+                  _price(context, 'B2B', double.tryParse(v['b2b'] as String)),
               ],
             ),
             if (inv.isNotEmpty) ...[
@@ -185,7 +185,7 @@ class _VariantCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(locNames[e.key] ?? 'Location',
-                          style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+                          style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
                       Text('${(e.value as Map)['onHand']}',
                           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                     ],
@@ -198,13 +198,13 @@ class _VariantCard extends StatelessWidget {
     );
   }
 
-  Widget _price(String label, double? value) {
+  Widget _price(BuildContext context, String label, double? value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: AppColors.inkSoft)),
+        Text(label, style: TextStyle(fontSize: 11, color: context.p.textSecondary)),
         Text(value == null ? '—' : money0(value),
-            style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.terracottaDark)),
+            style: TextStyle(fontWeight: FontWeight.w700, color: context.p.primaryDark)),
       ],
     );
   }

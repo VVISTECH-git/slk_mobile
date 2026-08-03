@@ -39,29 +39,29 @@ class _MovementCard extends StatelessWidget {
   const _MovementCard({required this.m});
   final MovementRow m;
 
-  ({Color color, IconData icon, String label}) get _meta {
+  ({Color color, IconData icon, String label}) _meta(BuildContext context) {
     switch (m.type) {
       case 'receive':
-        return (color: AppColors.success, icon: Icons.call_received, label: 'Received');
+        return (color: context.p.success, icon: Icons.call_received, label: 'Received');
       case 'sale':
-        return (color: AppColors.terracotta, icon: Icons.point_of_sale, label: 'Sale');
+        return (color: context.p.primary, icon: Icons.point_of_sale, label: 'Sale');
       case 'adjust':
-        return (color: AppColors.gold, icon: Icons.tune, label: 'Adjusted');
+        return (color: context.p.accent, icon: Icons.tune, label: 'Adjusted');
       case 'transfer':
       case 'transfer_out':
-        return (color: AppColors.inkSoft, icon: Icons.local_shipping, label: 'Transfer out');
+        return (color: context.p.textSecondary, icon: Icons.local_shipping, label: 'Transfer out');
       case 'transfer_in':
-        return (color: AppColors.success, icon: Icons.local_shipping_outlined, label: 'Transfer in');
+        return (color: context.p.success, icon: Icons.local_shipping_outlined, label: 'Transfer in');
       case 'opening':
-        return (color: AppColors.inkSoft, icon: Icons.flag_outlined, label: 'Opening');
+        return (color: context.p.textSecondary, icon: Icons.flag_outlined, label: 'Opening');
       default:
-        return (color: AppColors.inkSoft, icon: Icons.swap_vert, label: m.type);
+        return (color: context.p.textSecondary, icon: Icons.swap_vert, label: m.type);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final meta = _meta;
+    final meta = _meta(context);
     final route = [m.fromName, m.toName].where((s) => s != null).join(' → ');
     return Card(
       child: Padding(
@@ -82,15 +82,15 @@ class _MovementCard extends StatelessWidget {
                 children: [
                   Text(m.productName, style: const TextStyle(fontWeight: FontWeight.w700)),
                   Text('${m.sku} · ${m.variantLabel}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+                      style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
                   const SizedBox(height: 2),
                   Text(
                     '${meta.label}${route.isNotEmpty ? ' · $route' : ''}'
                     '${m.reference != null ? ' · ${m.reference}' : ''}',
-                    style: const TextStyle(fontSize: 12, color: AppColors.inkSoft),
+                    style: TextStyle(fontSize: 12, color: context.p.textSecondary),
                   ),
                   Text('${m.createdAt} · ${m.createdBy}',
-                      style: const TextStyle(fontSize: 11, color: AppColors.inkSoft)),
+                      style: TextStyle(fontSize: 11, color: context.p.textSecondary)),
                 ],
               ),
             ),

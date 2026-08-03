@@ -100,10 +100,10 @@ class _ReconciliationScreenState extends ConsumerState<ReconciliationScreen> {
                 crossAxisSpacing: 12,
                 childAspectRatio: 1.7,
                 children: [
-                  _Tile(label: 'Sales', value: money0((summary['amount'] as num?) ?? 0), color: AppColors.terracotta),
-                  _Tile(label: 'Invoices', value: '${summary['count'] ?? 0}', color: AppColors.success),
-                  _Tile(label: 'Units sold', value: '${summary['units'] ?? 0}', color: AppColors.gold),
-                  _Tile(label: 'GST collected', value: money0((summary['tax'] as num?) ?? 0), color: AppColors.inkSoft),
+                  _Tile(label: 'Sales', value: money0((summary['amount'] as num?) ?? 0), color: context.p.primary),
+                  _Tile(label: 'Invoices', value: '${summary['count'] ?? 0}', color: context.p.success),
+                  _Tile(label: 'Units sold', value: '${summary['units'] ?? 0}', color: context.p.accent),
+                  _Tile(label: 'GST collected', value: money0((summary['tax'] as num?) ?? 0), color: context.p.textSecondary),
                 ],
               ),
               const SizedBox(height: 20),
@@ -113,7 +113,7 @@ class _ReconciliationScreenState extends ConsumerState<ReconciliationScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(14),
                   child: byPayment.isEmpty
-                      ? const Text('No sales on this day.', style: TextStyle(color: AppColors.inkSoft))
+                      ? Text('No sales on this day.', style: TextStyle(color: context.p.textSecondary))
                       : Column(
                           children: ['cash', 'upi', 'card']
                               .where((m) => byPayment.containsKey(m))
@@ -138,7 +138,7 @@ class _ReconciliationScreenState extends ConsumerState<ReconciliationScreen> {
               const Text('Items sold', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
               const SizedBox(height: 8),
               if (sold.isEmpty)
-                const Card(child: Padding(padding: EdgeInsets.all(14), child: Text('Nothing sold.', style: TextStyle(color: AppColors.inkSoft))))
+                Card(child: Padding(padding: EdgeInsets.all(14), child: Text('Nothing sold.', style: TextStyle(color: context.p.textSecondary))))
               else
                 Card(
                   child: Padding(
@@ -155,7 +155,7 @@ class _ReconciliationScreenState extends ConsumerState<ReconciliationScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text('${m['productName']}', style: const TextStyle(fontWeight: FontWeight.w600)),
-                                    Text('${m['sku']}', style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+                                    Text('${m['sku']}', style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
                                   ],
                                 ),
                               ),
@@ -186,16 +186,16 @@ class _Tile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.p.surface2,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.p.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: color)),
-          Text(label, style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+          Text(label, style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
         ],
       ),
     );

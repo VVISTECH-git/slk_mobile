@@ -90,9 +90,9 @@ class _NewTransferScreenState extends ConsumerState<NewTransferScreen> {
             ),
             const SizedBox(height: 16),
             if (_from == null)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(vertical: 24),
-                child: Center(child: Text('Choose a source to list its stock.', style: TextStyle(color: AppColors.inkSoft))),
+                child: Center(child: Text('Choose a source to list its stock.', style: TextStyle(color: context.p.textSecondary))),
               )
             else
               _ItemPicker(
@@ -151,7 +151,7 @@ class _ItemPickerState extends ConsumerState<_ItemPicker> {
         const SizedBox(height: 8),
         variants.when(
           loading: () => const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator())),
-          error: (e, _) => Padding(padding: const EdgeInsets.all(16), child: Text('$e', style: const TextStyle(color: AppColors.danger))),
+          error: (e, _) => Padding(padding: const EdgeInsets.all(16), child: Text('$e', style: TextStyle(color: context.p.danger))),
           data: (list) {
             final q = _query.trim().toLowerCase();
             final rows = q.isEmpty
@@ -179,7 +179,7 @@ class _ItemPickerState extends ConsumerState<_ItemPicker> {
                 children: [
                   Text(v.productName, style: const TextStyle(fontWeight: FontWeight.w600)),
                   Text('${v.sku} · ${v.variantLabel} · ${v.stock} in stock',
-                      style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+                      style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
                 ],
               ),
             ),

@@ -1,76 +1,69 @@
 import 'package:flutter/material.dart';
 
-/// Sree Lakshmi Kalamkari brand palette — warm terracotta on cream, matching the
-/// web portal. One place to tune the whole app's look.
-class AppColors {
-  static const terracotta = Color(0xFFB5533B); // primary
-  static const terracottaDark = Color(0xFF8F3F2C);
-  static const cream = Color(0xFFFBF6EF); // page background
-  static const surface = Color(0xFFFFFFFF);
-  static const ink = Color(0xFF2A211C); // primary text
-  static const inkSoft = Color(0xFF6B5D53); // secondary text
-  static const border = Color(0xFFE7DDD0);
-  static const gold = Color(0xFFC9A24B);
-  static const success = Color(0xFF2E7D57);
-  static const danger = Color(0xFFB3261E);
-}
+import 'app_palette.dart';
 
-class AppTheme {
-  static ThemeData get light {
+export 'app_palette.dart'; // so `context.p` is available wherever app_theme is imported
+
+/// One selectable theme: a palette + metadata for the picker.
+class SlkTheme {
+  const SlkTheme({
+    required this.id,
+    required this.label,
+    required this.description,
+    required this.brightness,
+    required this.palette,
+  });
+
+  final String id;
+  final String label;
+  final String description;
+  final Brightness brightness;
+  final AppPalette palette;
+
+  List<Color> get swatch => [palette.appBar, palette.primary, palette.accent, palette.surface1];
+
+  ThemeData toThemeData() {
+    final p = palette;
     final scheme = ColorScheme.fromSeed(
-      seedColor: AppColors.terracotta,
-      primary: AppColors.terracotta,
-      surface: AppColors.surface,
-      brightness: Brightness.light,
+      seedColor: p.primary,
+      brightness: brightness,
+      primary: p.primary,
+      secondary: p.accent,
+      surface: p.surface2,
+      error: p.danger,
+      onSurface: p.text,
     );
-
-    final base = ThemeData(
-      useMaterial3: true,
-      colorScheme: scheme,
-      scaffoldBackgroundColor: AppColors.cream,
-      fontFamily: 'Roboto',
-    );
-
+    final base = ThemeData(useMaterial3: true, colorScheme: scheme, fontFamily: 'Roboto');
     return base.copyWith(
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.terracotta,
-        foregroundColor: Colors.white,
+      scaffoldBackgroundColor: p.surface1,
+      extensions: [p],
+      appBarTheme: AppBarTheme(
+        backgroundColor: p.appBar,
+        foregroundColor: p.onAppBar,
         elevation: 0,
         centerTitle: false,
       ),
       cardTheme: CardThemeData(
-        color: AppColors.surface,
+        color: p.surface2,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: AppColors.border),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: p.border)),
         margin: EdgeInsets.zero,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surface,
-        // Labels always sit above the field (never resting inside it, which
-        // reads like a value). Applies app-wide.
+        fillColor: p.surface2,
         floatingLabelBehavior: FloatingLabelBehavior.always,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.terracotta, width: 2),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: p.border)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: p.border)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: p.primary, width: 2)),
+        labelStyle: TextStyle(color: p.textSecondary, fontWeight: FontWeight.w600),
+        hintStyle: TextStyle(color: p.textMuted),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.terracotta,
-          foregroundColor: Colors.white,
+          backgroundColor: p.primary,
+          foregroundColor: p.onPrimary,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
@@ -82,17 +75,87 @@ class AppTheme {
             titleMedium: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             bodyLarge: const TextStyle(fontSize: 15, height: 1.35),
             bodyMedium: const TextStyle(fontSize: 14, height: 1.35),
-            bodySmall: const TextStyle(fontSize: 12, color: AppColors.inkSoft, height: 1.3),
+            bodySmall: TextStyle(fontSize: 12, color: p.textMuted, height: 1.3),
             labelLarge: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
           )
-          .apply(bodyColor: AppColors.ink, displayColor: AppColors.ink),
-      dividerColor: AppColors.border,
+          .apply(bodyColor: p.text, displayColor: p.text),
+      dividerColor: p.border,
       splashFactory: InkSparkle.splashFactory,
+      iconTheme: IconThemeData(color: p.textSecondary),
     );
   }
 }
 
-/// Spacing tokens — use instead of scattering magic numbers.
+/// The theme registry — Kalamkari (default) + Dark + a few curated alternates.
+class SlkThemes {
+  SlkThemes._();
+
+  static const kalamkari = SlkTheme(
+    id: 'kalamkari', label: 'Kalamkari', description: 'Warm terracotta · Default',
+    brightness: Brightness.light,
+    palette: AppPalette(
+      primary: Color(0xFFB5533B), primaryDark: Color(0xFF8F3F2C), accent: Color(0xFFC9A24B),
+      surface1: Color(0xFFFBF6EF), surface2: Color(0xFFFFFFFF), surface3: Color(0xFFF5EEE4),
+      text: Color(0xFF2A211C), textSecondary: Color(0xFF6B5D53), textMuted: Color(0xFF8A7C70),
+      border: Color(0xFFE7DDD0), success: Color(0xFF2E7D57), danger: Color(0xFFB3261E),
+      appBar: Color(0xFFB5533B), onAppBar: Color(0xFFFFFFFF), onPrimary: Color(0xFFFFFFFF),
+    ),
+  );
+
+  static const dark = SlkTheme(
+    id: 'dark', label: 'Dark', description: 'Night · Battery saver',
+    brightness: Brightness.dark,
+    palette: AppPalette(
+      primary: Color(0xFFD4674E), primaryDark: Color(0xFFB5533B), accent: Color(0xFFD9B665),
+      surface1: Color(0xFF141110), surface2: Color(0xFF221C19), surface3: Color(0xFF2E2723),
+      text: Color(0xFFF4ECE4), textSecondary: Color(0xFFC7B9AD), textMuted: Color(0xFF9A8C80),
+      border: Color(0xFF382E28), success: Color(0xFF4CAF80), danger: Color(0xFFE5675E),
+      appBar: Color(0xFF221C19), onAppBar: Color(0xFFF4ECE4), onPrimary: Color(0xFFFFFFFF),
+    ),
+  );
+
+  static const midnight = SlkTheme(
+    id: 'midnight', label: 'Midnight', description: 'Indigo · Premium',
+    brightness: Brightness.light,
+    palette: AppPalette(
+      primary: Color(0xFF4F46E5), primaryDark: Color(0xFF312E81), accent: Color(0xFFF59E0B),
+      surface1: Color(0xFFEEF2FF), surface2: Color(0xFFFFFFFF), surface3: Color(0xFFE0E7FF),
+      text: Color(0xFF1E1B4B), textSecondary: Color(0xFF3730A3), textMuted: Color(0xFF6D7AC7),
+      border: Color(0xFFC7D2FE), success: Color(0xFF10B981), danger: Color(0xFFEF4444),
+      appBar: Color(0xFF312E81), onAppBar: Color(0xFFFFFFFF), onPrimary: Color(0xFFFFFFFF),
+    ),
+  );
+
+  static const forest = SlkTheme(
+    id: 'forest', label: 'Forest', description: 'Green · Calm',
+    brightness: Brightness.light,
+    palette: AppPalette(
+      primary: Color(0xFF0D7A4E), primaryDark: Color(0xFF0D4F3C), accent: Color(0xFF2563EB),
+      surface1: Color(0xFFF0FDF4), surface2: Color(0xFFFFFFFF), surface3: Color(0xFFDCFCE7),
+      text: Color(0xFF052E1A), textSecondary: Color(0xFF1E5C41), textMuted: Color(0xFF4D8C6F),
+      border: Color(0xFFBBE8D4), success: Color(0xFF10A868), danger: Color(0xFFE01E35),
+      appBar: Color(0xFF0D4F3C), onAppBar: Color(0xFFFFFFFF), onPrimary: Color(0xFFFFFFFF),
+    ),
+  );
+
+  static const slate = SlkTheme(
+    id: 'slate', label: 'Slate', description: 'Corporate · Minimal',
+    brightness: Brightness.light,
+    palette: AppPalette(
+      primary: Color(0xFF2563EB), primaryDark: Color(0xFF1E293B), accent: Color(0xFFF59E0B),
+      surface1: Color(0xFFF8FAFC), surface2: Color(0xFFFFFFFF), surface3: Color(0xFFF1F5F9),
+      text: Color(0xFF0F172A), textSecondary: Color(0xFF475569), textMuted: Color(0xFF7A8DA3),
+      border: Color(0xFFCBD5E1), success: Color(0xFF22C55E), danger: Color(0xFFEF4444),
+      appBar: Color(0xFF1E293B), onAppBar: Color(0xFFFFFFFF), onPrimary: Color(0xFFFFFFFF),
+    ),
+  );
+
+  static const List<SlkTheme> all = [kalamkari, dark, midnight, forest, slate];
+  static const fallback = kalamkari;
+  static SlkTheme byId(String id) => all.firstWhere((t) => t.id == id, orElse: () => fallback);
+}
+
+/// Spacing tokens.
 class Gaps {
   static const h4 = SizedBox(height: 4);
   static const h8 = SizedBox(height: 8);
@@ -109,4 +172,3 @@ class Radii {
   static const md = 12.0;
   static const lg = 16.0;
 }
-

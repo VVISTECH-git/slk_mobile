@@ -140,13 +140,13 @@ class _StockRow extends StatelessWidget {
                       children: [
                         Text(v.productName, style: const TextStyle(fontWeight: FontWeight.w700)),
                         Text('${v.sku} · ${v.variantLabel}',
-                            style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+                            style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
                       ],
                     ),
                   ),
                   Text('${v.totalStock}',
                       style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-                  const Icon(Icons.chevron_right, color: AppColors.inkSoft),
+                  Icon(Icons.chevron_right, color: context.p.textSecondary),
                 ],
               ),
               const SizedBox(height: 8),
@@ -157,12 +157,12 @@ class _StockRow extends StatelessWidget {
                     .map((l) => Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: AppColors.cream,
+                            color: context.p.surface1,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.border),
+                            border: Border.all(color: context.p.border),
                           ),
                           child: Text('${l.name}: ${v.stockByLoc[l.id] ?? 0}',
-                              style: const TextStyle(fontSize: 11, color: AppColors.inkSoft)),
+                              style: TextStyle(fontSize: 11, color: context.p.textSecondary)),
                         ))
                     .toList(),
               ),

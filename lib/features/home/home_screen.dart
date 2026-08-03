@@ -50,7 +50,7 @@ class HomeScreen extends ConsumerWidget {
                   children: [
                     Text(session?.name ?? '', style: const TextStyle(fontWeight: FontWeight.w700)),
                     Text('${session?.storeName ?? ''} · ${isOwner ? 'Owner' : 'Cashier'}',
-                        style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+                        style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
                   ],
                 ),
               ),
@@ -88,14 +88,14 @@ class _StoreBanner extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
-      color: AppColors.terracotta.withValues(alpha: 0.08),
+      color: context.p.primary.withValues(alpha: 0.08),
       child: Row(
         children: [
-          const Icon(Icons.storefront_outlined, color: AppColors.terracottaDark, size: 20),
+          Icon(Icons.storefront_outlined, color: context.p.primaryDark, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Text('$store  ·  $name',
-                style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.terracottaDark)),
+                style: TextStyle(fontWeight: FontWeight.w600, color: context.p.primaryDark)),
           ),
         ],
       ),
@@ -110,7 +110,7 @@ class _ModuleTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.surface,
+      color: context.p.surface2,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -118,7 +118,7 @@ class _ModuleTile extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: context.p.border),
           ),
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -128,15 +128,15 @@ class _ModuleTile extends StatelessWidget {
                 height: 52,
                 width: 52,
                 decoration: BoxDecoration(
-                  color: AppColors.terracotta.withValues(alpha: 0.10),
+                  color: context.p.primary.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(module.icon, color: AppColors.terracotta, size: 26),
+                child: Icon(module.icon, color: context.p.primary, size: 26),
               ),
               const SizedBox(height: 12),
               Text(module.label,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.ink)),
+                  style: TextStyle(fontWeight: FontWeight.w600, color: context.p.text)),
             ],
           ),
         ),

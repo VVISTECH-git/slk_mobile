@@ -20,7 +20,7 @@ Future<bool?> showStockActionSheet(
   return showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: AppColors.surface,
+    backgroundColor: context.p.surface2,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
@@ -121,7 +121,7 @@ class _StockActionFormState extends ConsumerState<_StockActionForm> {
           Text(widget.variant.productName,
               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
           Text('${widget.variant.sku} · ${widget.variant.variantLabel}',
-              style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+              style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
           const SizedBox(height: 14),
           SegmentedButton<StockAction>(
             segments: const [

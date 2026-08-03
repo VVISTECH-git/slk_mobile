@@ -25,7 +25,7 @@ class TransfersScreen extends ConsumerWidget {
           await context.push('/transfers/new');
           ref.invalidate(transfersProvider);
         },
-        backgroundColor: AppColors.terracotta,
+        backgroundColor: context.p.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('New transfer'),
@@ -76,17 +76,17 @@ class _TransferCard extends ConsumerWidget {
               const SizedBox(height: 6),
               Row(
                 children: [
-                  const Icon(Icons.local_shipping_outlined, size: 16, color: AppColors.inkSoft),
+                  Icon(Icons.local_shipping_outlined, size: 16, color: context.p.textSecondary),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text('${row.fromName ?? '—'}  →  ${row.toName ?? '—'}',
-                        style: const TextStyle(fontSize: 13, color: AppColors.ink)),
+                        style: TextStyle(fontSize: 13, color: context.p.text)),
                   ),
                 ],
               ),
               const SizedBox(height: 4),
               Text('${row.itemCount} item${row.itemCount == 1 ? '' : 's'} · ${row.units} units · ${row.createdAt}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+                  style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
             ],
           ),
         ),
@@ -102,9 +102,9 @@ class TransferStatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (color, label) = switch (status) {
-      'received' => (AppColors.success, 'Received'),
-      'cancelled' => (AppColors.inkSoft, 'Cancelled'),
-      _ => (AppColors.gold, 'In transit'),
+      'received' => (context.p.success, 'Received'),
+      'cancelled' => (context.p.textSecondary, 'Cancelled'),
+      _ => (context.p.accent, 'In transit'),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

@@ -52,9 +52,9 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.cloud_off, size: 44, color: AppColors.inkSoft),
+            Icon(Icons.cloud_off, size: 44, color: context.p.textSecondary),
             const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.inkSoft)),
+            Text(message, textAlign: TextAlign.center, style: TextStyle(color: context.p.textSecondary)),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
               FilledButton.tonal(onPressed: onRetry, child: const Text('Try again')),
@@ -78,9 +78,9 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.inbox_outlined, size: 44, color: AppColors.inkSoft),
+            Icon(Icons.inbox_outlined, size: 44, color: context.p.textSecondary),
             const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.inkSoft)),
+            Text(message, textAlign: TextAlign.center, style: TextStyle(color: context.p.textSecondary)),
           ],
         ),
       ),
@@ -93,7 +93,7 @@ void showError(BuildContext context, Object error) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(
-      SnackBar(content: Text('$error'), backgroundColor: AppColors.danger),
+      SnackBar(content: Text('$error'), backgroundColor: context.p.danger),
     );
 }
 
@@ -101,6 +101,6 @@ void showOk(BuildContext context, String message) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: AppColors.success),
+      SnackBar(content: Text(message), backgroundColor: context.p.success),
     );
 }

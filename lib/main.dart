@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'router.dart';
-import 'theme/app_theme.dart';
+import 'theme/theme_controller.dart';
 
 void main() {
   runApp(const ProviderScope(child: SlkApp()));
@@ -14,10 +14,11 @@ class SlkApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    final theme = ref.watch(themeControllerProvider);
     return MaterialApp.router(
       title: 'Sree Lakshmi Kalamkari',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
+      theme: theme.toThemeData(),
       routerConfig: router,
       // On wide screens (tablets/foldables) keep the UI in a comfortable
       // phone-width column rather than stretching edge to edge.

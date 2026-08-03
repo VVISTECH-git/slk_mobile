@@ -55,9 +55,9 @@ class SkeletonList extends StatelessWidget {
       itemBuilder: (_, _) => Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.p.surface2,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: context.p.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -25,6 +25,9 @@ dependencies:
   # Secure token storage
   flutter_secure_storage: ^9.2.4
 
+  # Theme persistence
+  shared_preferences: ^2.3.3
+
   # Barcode / QR scanning (POS + stock)
   mobile_scanner: ^6.0.2
 

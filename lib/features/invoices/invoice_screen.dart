@@ -88,16 +88,16 @@ class _InvoiceBody extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: AppColors.success.withValues(alpha: 0.10),
+              color: context.p.success.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
-                const Icon(Icons.check_circle, color: AppColors.success),
+                Icon(Icons.check_circle, color: context.p.success),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text('Sale recorded · ${money(inv.total)}',
-                      style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.success)),
+                      style: TextStyle(fontWeight: FontWeight.w700, color: context.p.success)),
                 ),
               ],
             ),
@@ -116,19 +116,19 @@ class _InvoiceBody extends StatelessWidget {
                     _PaymentChip(mode: inv.paymentMode),
                   ],
                 ),
-                Text(inv.createdAt, style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+                Text(inv.createdAt, style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
                 if (inv.storeName != null)
                   Text('${inv.storeName}${inv.staffName != null ? ' · ${inv.staffName}' : ''}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+                      style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
                 if (inv.customer.hasAny) ...[
                   const Divider(height: 20),
                   const Text('Customer', style: TextStyle(fontWeight: FontWeight.w700)),
                   Text(inv.customer.name ?? '—'),
                   if (inv.customer.phone?.isNotEmpty == true)
-                    Text(inv.customer.phone!, style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+                    Text(inv.customer.phone!, style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
                   if (inv.customer.gstin?.isNotEmpty == true)
                     Text('GSTIN: ${inv.customer.gstin}',
-                        style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+                        style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
                 ],
               ],
             ),
@@ -152,7 +152,7 @@ class _InvoiceBody extends StatelessWidget {
                             Text(
                                 '${it.sku} · ${money(it.unitPrice)} × ${it.quantity}'
                                 '${it.gstRate > 0 ? ' · GST ${it.gstRate.toStringAsFixed(0)}%' : ''}',
-                                style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+                                style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
                           ],
                         ),
                       ),
@@ -199,11 +199,11 @@ class _PaymentChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.gold.withValues(alpha: 0.15),
+        color: context.p.accent.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(mode.toUpperCase(),
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.terracottaDark)),
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: context.p.primaryDark)),
     );
   }
 }

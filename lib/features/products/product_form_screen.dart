@@ -426,9 +426,9 @@ class _DetailsSection extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: Row(children: [
-              Icon(expanded ? Icons.expand_less : Icons.expand_more, color: AppColors.inkSoft),
+              Icon(expanded ? Icons.expand_less : Icons.expand_more, color: context.p.textSecondary),
               const SizedBox(width: 6),
-              const Text('More details (optional)', style: TextStyle(color: AppColors.inkSoft, fontWeight: FontWeight.w600)),
+              Text('More details (optional)', style: TextStyle(color: context.p.textSecondary, fontWeight: FontWeight.w600)),
             ]),
           ),
         ),
@@ -514,15 +514,15 @@ class _VariantCard extends StatelessWidget {
                   IconButton(
                     visualDensity: VisualDensity.compact,
                     onPressed: onRemove,
-                    icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+                    icon: Icon(Icons.delete_outline, color: context.p.danger),
                   ),
               ],
             ),
             // ---- Photos (required: 1–5) ----
             Row(children: [
-              const Text('Photos *', style: TextStyle(fontSize: 12, color: AppColors.inkSoft, fontWeight: FontWeight.w600)),
+              Text('Photos *', style: TextStyle(fontSize: 12, color: context.p.textSecondary, fontWeight: FontWeight.w600)),
               const SizedBox(width: 6),
-              Text('${variant.images.length}/5', style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+              Text('${variant.images.length}/5', style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
             ]),
             const SizedBox(height: 6),
             SizedBox(
@@ -544,7 +544,7 @@ class _VariantCard extends StatelessWidget {
                             top: -6,
                             right: -6,
                             child: IconButton(
-                              icon: const CircleAvatar(radius: 11, backgroundColor: AppColors.danger, child: Icon(Icons.close, size: 14, color: Colors.white)),
+                              icon: CircleAvatar(radius: 11, backgroundColor: context.p.danger, child: Icon(Icons.close, size: 14, color: Colors.white)),
                               onPressed: () {
                                 variant.images.removeAt(j);
                                 onChanged();
@@ -563,15 +563,15 @@ class _VariantCard extends StatelessWidget {
                         width: 84,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.border),
-                          color: AppColors.cream,
+                          border: Border.all(color: context.p.border),
+                          color: context.p.surface1,
                         ),
-                        child: const Column(
+                        child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.add_a_photo_outlined, color: AppColors.terracotta),
+                            Icon(Icons.add_a_photo_outlined, color: context.p.primary),
                             SizedBox(height: 2),
-                            Text('Add', style: TextStyle(fontSize: 11, color: AppColors.inkSoft)),
+                            Text('Add', style: TextStyle(fontSize: 11, color: context.p.textSecondary)),
                           ],
                         ),
                       ),
@@ -596,7 +596,7 @@ class _VariantCard extends StatelessWidget {
               Expanded(child: _price(variant.b2b, 'B2B')),
             ]),
             const Divider(height: 22),
-            const Text('Opening stock', style: TextStyle(fontSize: 12, color: AppColors.inkSoft, fontWeight: FontWeight.w600)),
+            Text('Opening stock', style: TextStyle(fontSize: 12, color: context.p.textSecondary, fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
             for (final loc in locations)
               Padding(

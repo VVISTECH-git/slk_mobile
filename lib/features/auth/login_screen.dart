@@ -59,7 +59,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.cream,
+      backgroundColor: context.p.surface1,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -105,11 +105,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       children: [
         const _Brand(),
         const SizedBox(height: 28),
-        const Text('Sign in to the till',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.ink)),
+        Text('Sign in to the till',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: context.p.text)),
         const SizedBox(height: 4),
-        const Text('Choose your name and enter your PIN.',
-            style: TextStyle(color: AppColors.inkSoft)),
+        Text('Choose your name and enter your PIN.',
+            style: TextStyle(color: context.p.textSecondary)),
         const SizedBox(height: 20),
         DropdownButtonFormField<String>(
           initialValue: _staffId,
@@ -185,7 +185,7 @@ class _Brand extends StatelessWidget {
           height: 64,
           width: 64,
           decoration: BoxDecoration(
-            color: AppColors.terracotta,
+            color: context.p.primary,
             borderRadius: BorderRadius.circular(18),
           ),
           child: const Center(
@@ -194,9 +194,9 @@ class _Brand extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        const Text('Sree Lakshmi Kalamkari',
+        Text('Sree Lakshmi Kalamkari',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.terracottaDark)),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.p.primaryDark)),
       ],
     );
   }
@@ -212,7 +212,7 @@ class _ErrorRetry extends StatelessWidget {
       children: [
         const _Brand(),
         const SizedBox(height: 24),
-        Text(message, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.inkSoft)),
+        Text(message, textAlign: TextAlign.center, style: TextStyle(color: context.p.textSecondary)),
         const SizedBox(height: 16),
         FilledButton.tonal(onPressed: onRetry, child: const Text('Try again')),
       ],

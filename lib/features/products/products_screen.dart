@@ -38,7 +38,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
           await context.push('/products/new');
           ref.invalidate(productsProvider);
         },
-        backgroundColor: AppColors.terracotta,
+        backgroundColor: context.p.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('New product'),
@@ -121,7 +121,7 @@ class _ProductCard extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text('${row.productCode}${row.categoryPath.isNotEmpty ? ' · ${row.categoryPath}' : ''}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+                  style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
               const SizedBox(height: 10),
               Row(
                 children: [
@@ -130,12 +130,12 @@ class _ProductCard extends StatelessWidget {
                   _Pill(icon: Icons.style_outlined, text: '${row.variantCount} variant${row.variantCount == 1 ? '' : 's'}'),
                   const Spacer(),
                   if (row.lowStock)
-                    const Icon(Icons.warning_amber_rounded, color: AppColors.danger, size: 18),
+                    Icon(Icons.warning_amber_rounded, color: context.p.danger, size: 18),
                   const SizedBox(width: 4),
                   Text('${row.totalStock} in stock',
                       style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: row.lowStock ? AppColors.danger : AppColors.ink)),
+                          color: row.lowStock ? context.p.danger : context.p.text)),
                 ],
               ),
             ],
@@ -152,10 +152,10 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = status == 'active'
-        ? AppColors.success
+        ? context.p.success
         : status == 'draft'
-            ? AppColors.gold
-            : AppColors.inkSoft;
+            ? context.p.accent
+            : context.p.textSecondary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(20)),
@@ -174,9 +174,9 @@ class _Pill extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 15, color: AppColors.inkSoft),
+        Icon(icon, size: 15, color: context.p.textSecondary),
         const SizedBox(width: 4),
-        Text(text, style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+        Text(text, style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
       ],
     );
   }

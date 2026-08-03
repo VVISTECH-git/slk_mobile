@@ -101,10 +101,10 @@ class _TransferDetailScreenState extends ConsumerState<TransferDetailScreen> {
                       const SizedBox(height: 6),
                       Text('${t.fromName ?? '—'}  →  ${t.toName ?? '—'}'),
                       Text('Dispatched by ${t.createdBy} · ${t.createdAt}',
-                          style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+                          style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
                       if (t.receivedBy != null)
                         Text('Received by ${t.receivedBy} · ${t.receivedAt ?? ''}',
-                            style: const TextStyle(fontSize: 12, color: AppColors.success)),
+                            style: TextStyle(fontSize: 12, color: context.p.success)),
                       if ((t.note ?? '').isNotEmpty) ...[
                         const SizedBox(height: 6),
                         Text(t.note!, style: const TextStyle(fontStyle: FontStyle.italic)),
@@ -164,9 +164,9 @@ class _TransferDetailScreenState extends ConsumerState<TransferDetailScreen> {
                 children: [
                   Text(it.productName, style: const TextStyle(fontWeight: FontWeight.w600)),
                   Text('${it.sku}${it.variantLabel != null && it.variantLabel != '—' ? ' · ${it.variantLabel}' : ''}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+                      style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
                   Text('Dispatched: ${it.quantityDispatched}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+                      style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
                 ],
               ),
             ),
@@ -193,8 +193,8 @@ class _TransferDetailScreenState extends ConsumerState<TransferDetailScreen> {
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   color: it.quantityReceived != null && it.quantityReceived! < it.quantityDispatched
-                      ? AppColors.danger
-                      : AppColors.ink,
+                      ? context.p.danger
+                      : context.p.text,
                 ),
               ),
           ],

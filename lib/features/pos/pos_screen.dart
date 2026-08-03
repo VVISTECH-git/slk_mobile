@@ -135,20 +135,20 @@ class _ProductRow extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(variant.productName,
-                      style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.ink)),
+                      style: TextStyle(fontWeight: FontWeight.w600, color: context.p.text)),
                   const SizedBox(height: 2),
                   Text('${variant.sku} · ${variant.variantLabel}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+                      style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
                   const SizedBox(height: 4),
                   Row(
                     children: [
                       Text(money(variant.price),
-                          style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.terracottaDark)),
+                          style: TextStyle(fontWeight: FontWeight.w700, color: context.p.primaryDark)),
                       const SizedBox(width: 8),
                       Text('${variant.stock} in stock',
                           style: TextStyle(
                               fontSize: 12,
-                              color: variant.stock <= 3 ? AppColors.danger : AppColors.inkSoft)),
+                              color: variant.stock <= 3 ? context.p.danger : context.p.textSecondary)),
                     ],
                   ),
                 ],
@@ -184,7 +184,7 @@ class _QtyStepper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.p.border),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -216,7 +216,7 @@ class _CartBar extends ConsumerWidget {
 
     return Material(
       elevation: 12,
-      color: AppColors.surface,
+      color: context.p.surface2,
       child: SafeArea(
         top: false,
         child: Padding(
@@ -228,9 +228,9 @@ class _CartBar extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text('$units item${units == 1 ? '' : 's'}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+                      style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
                   Text(money(subtotal),
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.ink)),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.p.text)),
                 ],
               ),
               const Spacer(),

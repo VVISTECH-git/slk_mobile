@@ -98,7 +98,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                                 Text(l.variant.productName,
                                     style: const TextStyle(fontWeight: FontWeight.w600)),
                                 Text('${l.variant.sku} · ${money(l.variant.price)} × ${l.quantity}',
-                                    style: const TextStyle(fontSize: 12, color: AppColors.inkSoft)),
+                                    style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
                               ],
                             ),
                           ),
@@ -165,7 +165,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
           // ---- Totals ----
           Card(
-            color: AppColors.terracotta.withValues(alpha: 0.06),
+            color: context.p.primary.withValues(alpha: 0.06),
             child: Padding(
               padding: const EdgeInsets.all(14),
               child: Column(
@@ -199,7 +199,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final style = TextStyle(
       fontWeight: bold ? FontWeight.w800 : FontWeight.w500,
       fontSize: bold ? 18 : 15,
-      color: AppColors.ink,
+      color: context.p.text,
     );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
@@ -216,5 +216,5 @@ class _SectionLabel extends StatelessWidget {
   final String text;
   @override
   Widget build(BuildContext context) => Text(text,
-      style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.ink, fontSize: 15));
+      style: TextStyle(fontWeight: FontWeight.w700, color: context.p.text, fontSize: 15));
 }

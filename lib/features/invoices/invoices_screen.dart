@@ -58,9 +58,9 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                color: AppColors.terracotta.withValues(alpha: 0.06),
+                color: context.p.primary.withValues(alpha: 0.06),
                 child: Text('${filtered.length} invoices · ${money0(total)}',
-                    style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.terracottaDark)),
+                    style: TextStyle(fontWeight: FontWeight.w600, color: context.p.primaryDark)),
               ),
               Expanded(
                 child: ListView.separated(
@@ -100,9 +100,9 @@ class _InvoiceCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       '${row.customer ?? 'Walk-in'}${row.storeName != null ? ' · ${row.storeName}' : ''}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.inkSoft),
+                      style: TextStyle(fontSize: 12, color: context.p.textSecondary),
                     ),
-                    Text(row.createdAt, style: const TextStyle(fontSize: 11, color: AppColors.inkSoft)),
+                    Text(row.createdAt, style: TextStyle(fontSize: 11, color: context.p.textSecondary)),
                   ],
                 ),
               ),
@@ -111,7 +111,7 @@ class _InvoiceCard extends StatelessWidget {
                 children: [
                   Text(money(row.total), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                   Text(row.paymentMode.toUpperCase(),
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.terracottaDark)),
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: context.p.primaryDark)),
                 ],
               ),
             ],

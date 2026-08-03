@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../theme/app_theme.dart';
+import '../../theme/theme_controller.dart';
 import '../../widgets/async_view.dart';
 import 'business_edit_screen.dart';
 import 'settings_providers.dart';
@@ -60,6 +61,11 @@ class SettingsScreen extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              // ---- Appearance ----
+              _SectionHeader('Appearance'),
+              const _ThemePicker(),
+              const SizedBox(height: 20),
+
               // ---- Business profile ----
               _SectionHeader('Business profile'),
               Card(
@@ -163,6 +169,99 @@ class SettingsScreen extends ConsumerWidget {
   }
 }
 
+/// Swatch-tile theme picker, LEAP-style: tap a card to switch the whole app's
+/// look instantly. The choice persists across launches.
+class _ThemePicker extends ConsumerWidget {
+  const _ThemePicker();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final current = ref.watch(themeControllerProvider);
+    return Column(
+      children: [
+        for (final t in SlkThemes.all)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _ThemeTile(
+              theme: t,
+              selected: t.id == current.id,
+              onTap: () => ref.read(themeControllerProvider.notifier).select(t),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _ThemeTile extends StatelessWidget {
+  const _ThemeTile({required this.theme, required this.selected, required this.onTap});
+  final SlkTheme theme;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: context.p.surface2,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: selected ? context.p.primary : context.p.border,
+              width: selected ? 2 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              // Swatch preview
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: context.p.border),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  children: [
+                    Expanded(child: Container(color: theme.palette.appBar)),
+                    Row(
+                      children: [
+                        Expanded(child: Container(height: 14, color: theme.palette.primary)),
+                        Expanded(child: Container(height: 14, color: theme.palette.accent)),
+                        Expanded(child: Container(height: 14, color: theme.palette.surface1)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(theme.label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                    Text(theme.description, style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
+                  ],
+                ),
+              ),
+              if (selected)
+                Icon(Icons.check_circle, color: context.p.primary)
+              else
+                Icon(Icons.circle_outlined, color: context.p.border),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader(this.title, {this.onAdd});
   final String title;
@@ -196,8 +295,8 @@ class _NamedRow extends StatelessWidget {
         title: Text(name),
         subtitle: Text(sub, style: const TextStyle(fontSize: 12)),
         trailing: onDelete == null
-            ? const Icon(Icons.lock_outline, size: 16, color: AppColors.inkSoft)
-            : IconButton(onPressed: onDelete, icon: const Icon(Icons.delete_outline, color: AppColors.danger)),
+            ? Icon(Icons.lock_outline, size: 16, color: context.p.textSecondary)
+            : IconButton(onPressed: onDelete, icon: Icon(Icons.delete_outline, color: context.p.danger)),
       ),
     );
   }
@@ -225,7 +324,7 @@ class _AttrGroup extends ConsumerWidget {
             subtitle: Text('${m['inUse']} in use', style: const TextStyle(fontSize: 12)),
             trailing: (m['inUse'] as num?) == 0
                 ? IconButton(
-                    icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+                    icon: Icon(Icons.delete_outline, color: context.p.danger),
                     onPressed: () async {
                       try {
                         await ref.read(settingsRepositoryProvider).deleteAttribute(kind, m['id'] as String);
@@ -235,7 +334,7 @@ class _AttrGroup extends ConsumerWidget {
                       }
                     },
                   )
-                : const Icon(Icons.lock_outline, size: 16, color: AppColors.inkSoft),
+                : Icon(Icons.lock_outline, size: 16, color: context.p.textSecondary),
           );
         }),
         Align(
