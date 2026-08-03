@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/theme_button.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../widgets/async_view.dart';
@@ -63,7 +64,8 @@ class _BusinessEditScreenState extends ConsumerState<BusinessEditScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Business profile')),
+      appBar: AppBar(
+        actions: const [ThemeButton()],title: const Text('Business profile')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

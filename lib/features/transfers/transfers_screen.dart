@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../models/transfer.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/theme_button.dart';
 import '../../widgets/async_view.dart';
 import 'transfer_providers.dart';
 
@@ -17,6 +18,7 @@ class TransfersScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Transfers'),
         actions: [
+          const ThemeButton(),
           IconButton(onPressed: () => ref.invalidate(transfersProvider), icon: const Icon(Icons.refresh)),
         ],
       ),

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/format.dart';
 import '../../models/product.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/theme_button.dart';
 import '../../widgets/async_view.dart';
 import 'product_providers.dart';
 
@@ -26,6 +27,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
       appBar: AppBar(
         title: const Text('Products'),
         actions: [
+          const ThemeButton(),
           IconButton(
             tooltip: 'Refresh',
             onPressed: () => ref.invalidate(productsProvider),

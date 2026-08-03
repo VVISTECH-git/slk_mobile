@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/theme_button.dart';
 import '../../widgets/async_view.dart';
 import 'pos_providers.dart';
 
@@ -76,7 +77,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final total = (subtotal - _discountValue).clamp(0, double.infinity);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Checkout')),
+      appBar: AppBar(
+        actions: const [ThemeButton()],title: const Text('Checkout')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

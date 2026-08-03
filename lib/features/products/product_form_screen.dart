@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../theme/app_theme.dart';
+import '../../widgets/theme_button.dart';
 import '../../widgets/async_view.dart';
 import 'product_providers.dart';
 
@@ -247,7 +248,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     final lookups = ref.watch(lookupsProvider);
     if (_loadingInitial) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Edit product')),
+        appBar: AppBar(
+        actions: const [ThemeButton()],title: const Text('Edit product')),
         body: const Center(child: CircularProgressIndicator()),
       );
     }

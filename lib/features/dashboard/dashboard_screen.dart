@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/format.dart';
 import '../../core/providers.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/theme_button.dart';
 import '../../widgets/async_view.dart';
 
 final dashboardProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
@@ -22,6 +23,7 @@ class DashboardScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
+          const ThemeButton(),
           IconButton(onPressed: () => ref.invalidate(dashboardProvider), icon: const Icon(Icons.refresh)),
         ],
       ),

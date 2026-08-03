@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import 'theme_button.dart';
 
 /// Temporary stand-in for a module still under construction. Replaced screen by
 /// screen as each module lands.
@@ -11,7 +12,8 @@ class PlaceholderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(
+        actions: const [ThemeButton()],title: Text(title)),
       body: Center(
         child: Padding(
           padding: EdgeInsets.all(24),

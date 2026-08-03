@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/format.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/theme_button.dart';
 import '../../widgets/async_view.dart';
 import 'product_providers.dart';
 
@@ -33,6 +34,7 @@ class ProductDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Product'),
         actions: [
+          const ThemeButton(),
           IconButton(
             tooltip: 'Edit',
             icon: const Icon(Icons.edit_outlined),

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../core/format.dart';
 import '../../core/providers.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/theme_button.dart';
 import '../../widgets/async_view.dart';
 
 typedef ReconKey = ({String? date, String? storeId});
@@ -40,6 +41,7 @@ class _ReconciliationScreenState extends ConsumerState<ReconciliationScreen> {
       appBar: AppBar(
         title: const Text('Daily report'),
         actions: [
+          const ThemeButton(),
           IconButton(
             onPressed: () => ref.invalidate(reconProvider((date: _dateStr, storeId: _storeId))),
             icon: const Icon(Icons.refresh),

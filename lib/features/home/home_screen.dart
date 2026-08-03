@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../theme/app_theme.dart';
+import '../../widgets/theme_button.dart';
 import '../auth/auth_controller.dart';
 
 class _Module {
@@ -37,6 +38,7 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Sree Lakshmi Kalamkari'),
         actions: [
+          const ThemeButton(),
           PopupMenuButton<String>(
             icon: const Icon(Icons.account_circle_outlined),
             onSelected: (v) {

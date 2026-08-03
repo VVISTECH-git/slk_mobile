@@ -8,6 +8,7 @@ import 'package:printing/printing.dart';
 import '../../core/format.dart';
 import '../../models/invoice.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/theme_button.dart';
 import '../../widgets/async_view.dart';
 import 'invoice_pdf.dart';
 import 'invoice_providers.dart';
@@ -29,6 +30,7 @@ class InvoiceScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        actions: const [ThemeButton()],
         title: Text(justCreated ? 'Sale complete' : 'Invoice'),
         leading: justCreated
             ? IconButton(icon: const Icon(Icons.close), onPressed: () => context.go('/pos'))

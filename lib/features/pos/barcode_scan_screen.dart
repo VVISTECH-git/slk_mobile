@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../theme/app_theme.dart';
+import '../../widgets/theme_button.dart';
 
 /// Full-screen camera barcode/QR scanner. Pops with the first decoded string.
 /// Used by POS (add to cart) and stock/transfer pickers (find a variant).
@@ -43,6 +44,7 @@ class _BarcodeScanScreenState extends State<BarcodeScanScreen> {
       appBar: AppBar(
         title: Text(widget.title),
         actions: [
+          const ThemeButton(),
           IconButton(
             onPressed: () => _controller.toggleTorch(),
             icon: const Icon(Icons.flashlight_on_outlined),

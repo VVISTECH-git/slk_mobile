@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/stock.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/theme_button.dart';
 import '../../widgets/async_view.dart';
 import 'stock_providers.dart';
 
@@ -16,6 +17,7 @@ class MovementsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Movement history'),
         actions: [
+          const ThemeButton(),
           IconButton(onPressed: () => ref.invalidate(movementsProvider), icon: const Icon(Icons.refresh)),
         ],
       ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/transfer.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/theme_button.dart';
 import '../../widgets/async_view.dart';
 import 'transfer_providers.dart';
 import 'transfers_screen.dart' show TransferStatusChip;
@@ -66,7 +67,8 @@ class _TransferDetailScreenState extends ConsumerState<TransferDetailScreen> {
   Widget build(BuildContext context) {
     final detail = ref.watch(transferDetailProvider(widget.transferId));
     return Scaffold(
-      appBar: AppBar(title: const Text('Transfer')),
+      appBar: AppBar(
+        actions: const [ThemeButton()],title: const Text('Transfer')),
       body: AsyncView<TransferDetail>(
         value: detail,
         onRetry: () => ref.invalidate(transferDetailProvider(widget.transferId)),

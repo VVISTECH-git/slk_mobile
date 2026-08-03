@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/format.dart';
 import '../../models/invoice.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/theme_button.dart';
 import '../../widgets/async_view.dart';
 import 'invoice_providers.dart';
 
@@ -25,6 +26,7 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
       appBar: AppBar(
         title: const Text('Invoices'),
         actions: [
+          const ThemeButton(),
           IconButton(onPressed: () => ref.invalidate(invoicesListProvider), icon: const Icon(Icons.refresh)),
         ],
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../theme/app_theme.dart';
+import '../../widgets/theme_button.dart';
 import '../../theme/theme_controller.dart';
 import '../../widgets/async_view.dart';
 import 'business_edit_screen.dart';
@@ -45,6 +46,7 @@ class SettingsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Settings'),
         actions: [
+          const ThemeButton(),
           IconButton(onPressed: () => ref.invalidate(settingsProvider), icon: const Icon(Icons.refresh)),
         ],
       ),

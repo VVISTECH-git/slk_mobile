@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/format.dart';
 import '../../models/pos.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/theme_button.dart';
 import '../../widgets/async_view.dart';
 import 'barcode_scan_screen.dart';
 import 'pos_providers.dart';
@@ -54,6 +55,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       appBar: AppBar(
         title: const Text('Point of Sale'),
         actions: [
+          const ThemeButton(),
           IconButton(
             tooltip: 'Refresh',
             onPressed: () => ref.invalidate(sellableProvider),

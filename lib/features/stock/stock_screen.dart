@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../models/product.dart';
 import '../../models/stock.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/theme_button.dart';
 import '../../widgets/async_view.dart';
 import '../pos/barcode_scan_screen.dart';
 import 'stock_action_sheet.dart';
@@ -45,6 +46,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
       appBar: AppBar(
         title: const Text('Stock'),
         actions: [
+          const ThemeButton(),
           IconButton(
             tooltip: 'Movement history',
             onPressed: () => context.push('/stock/movements'),

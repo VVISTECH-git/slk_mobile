@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../models/product.dart';
 import '../../models/transfer.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/theme_button.dart';
 import '../../widgets/async_view.dart';
 import 'transfer_providers.dart';
 
@@ -65,7 +66,8 @@ class _NewTransferScreenState extends ConsumerState<NewTransferScreen> {
     final locations = ref.watch(transferLocationsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('New transfer')),
+      appBar: AppBar(
+        actions: const [ThemeButton()],title: const Text('New transfer')),
       body: AsyncView<List<NamedLocation>>(
         value: locations,
         onRetry: () => ref.invalidate(transferLocationsProvider),
