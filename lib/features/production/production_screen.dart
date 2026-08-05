@@ -82,6 +82,12 @@ class ProductionScreen extends ConsumerWidget {
             },
           ),
           _Tile(
+            icon: Icons.inventory_outlined,
+            title: 'Finish → stock',
+            subtitle: 'Turn finished pieces into sellable stock',
+            onTap: () => context.push('/production/finish'),
+          ),
+          _Tile(
             icon: Icons.search,
             title: 'Piece lookup',
             subtitle: 'Scan a tag to see its full history',

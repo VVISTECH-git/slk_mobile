@@ -27,6 +27,7 @@ import 'features/production/dispatch_screen.dart';
 import 'features/production/job_board_screen.dart';
 import 'features/production/receive_screen.dart';
 import 'features/production/piece_lookup_screen.dart';
+import 'features/production/finish_screen.dart';
 import 'widgets/placeholder_screen.dart';
 
 /// App router. Redirects between splash / login / app based on auth status; a
@@ -109,6 +110,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, state) => ReceiveScreen(orderId: state.pathParameters['id']!),
       ),
       GoRoute(path: '/production/lookup', builder: (_, _) => const PieceLookupScreen()),
+      GoRoute(path: '/production/finish', builder: (_, _) => const FinishScreen()),
 
       // Dashboard, invoices, reports, settings
       GoRoute(path: '/dashboard', builder: (_, _) => const DashboardScreen()),

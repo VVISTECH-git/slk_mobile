@@ -33,6 +33,11 @@ final jobOrderProvider =
   return (data as Map).cast<String, dynamic>();
 });
 
+/// All product variants — the picker for turning finished pieces into stock.
+final finishVariantsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+  return (await ref.watch(apiClientProvider).get('/production/variants')) as List;
+});
+
 // ---- Writes ----
 
 final productionRepositoryProvider = Provider((ref) => ProductionRepository(ref));
@@ -89,6 +94,20 @@ class ProductionRepository {
     final data = await ref.read(apiClientProvider).post('/production/orders/$jobOrderId/receive', body: {
       'tagCodes': tagCodes,
       if (note != null && note.isNotEmpty) 'note': note,
+    });
+    return (data as Map).cast<String, dynamic>();
+  }
+
+  /// Finish scanned pieces into sellable warehouse stock for a variant.
+  Future<Map<String, dynamic>> finishPieces({
+    required List<String> tagCodes,
+    required String variantId,
+    double? unitCost,
+  }) async {
+    final data = await ref.read(apiClientProvider).post('/production/finish', body: {
+      'tagCodes': tagCodes,
+      'variantId': variantId,
+      if (unitCost != null) 'unitCost': unitCost,
     });
     return (data as Map).cast<String, dynamic>();
   }
