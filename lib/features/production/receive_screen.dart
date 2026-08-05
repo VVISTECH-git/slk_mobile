@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:printing/printing.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/async_view.dart';
 import '../../widgets/theme_button.dart';
 import 'continuous_scanner.dart';
+import 'production_pdf.dart';
 import 'production_providers.dart';
 
 class ReceiveScreen extends ConsumerStatefulWidget {
@@ -62,6 +64,48 @@ class _ReceiveScreenState extends ConsumerState<ReceiveScreen> {
     );
   }
 
+  Future<void> _retag(String pieceId) async {
+    final c = TextEditingController();
+    final newTag = await showDialog<String>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Re-tag piece'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('The old tag was damaged. Enter or scan the new tag now on this piece.'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: c,
+              autofocus: true,
+              textCapitalization: TextCapitalization.characters,
+              decoration: const InputDecoration(labelText: 'New tag code'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(context, c.text.trim()), child: const Text('Re-tag & receive')),
+        ],
+      ),
+    );
+    if (newTag == null || newTag.isEmpty || !mounted) return;
+    try {
+      final repo = ref.read(productionRepositoryProvider);
+      await repo.retagPiece(pieceId, newTag);
+      await repo.receive(widget.orderId, [newTag]);
+      ref.invalidate(jobOrderProvider(widget.orderId));
+      if (mounted) showOk(context, 'Re-tagged and received.');
+    } catch (e) {
+      if (mounted) showError(context, e);
+    }
+  }
+
+  Future<void> _printChallan(Map<String, dynamic> order) async {
+    final bytes = await buildChallanPdf(order);
+    await Printing.layoutPdf(onLayout: (_) async => bytes);
+  }
+
   @override
   Widget build(BuildContext context) {
     final order = ref.watch(jobOrderProvider(widget.orderId));
@@ -70,6 +114,11 @@ class _ReceiveScreenState extends ConsumerState<ReceiveScreen> {
         title: const Text('Receive'),
         actions: [
           const ThemeButton(),
+          IconButton(
+            tooltip: 'Print challan',
+            onPressed: () => order.whenData((o) => _printChallan(o)),
+            icon: const Icon(Icons.print_outlined),
+          ),
           IconButton(onPressed: () => ref.invalidate(jobOrderProvider(widget.orderId)), icon: const Icon(Icons.refresh)),
         ],
       ),
@@ -116,7 +165,7 @@ class _ReceiveScreenState extends ConsumerState<ReceiveScreen> {
                     Text('Pieces', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                     const SizedBox(height: 8),
                     for (final p in pieces)
-                      _pieceRow(context, (p as Map).cast<String, dynamic>()),
+                      _pieceRow(context, (p as Map).cast<String, dynamic>(), closed),
                   ],
                 ),
               ),
@@ -156,7 +205,7 @@ class _ReceiveScreenState extends ConsumerState<ReceiveScreen> {
     );
   }
 
-  Widget _pieceRow(BuildContext context, Map<String, dynamic> p) {
+  Widget _pieceRow(BuildContext context, Map<String, dynamic> p, bool closed) {
     final received = p['status'] == 'received';
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
@@ -169,7 +218,16 @@ class _ReceiveScreenState extends ConsumerState<ReceiveScreen> {
             child: Text('${p['tag']}',
                 style: TextStyle(fontFamily: 'monospace', fontSize: 13, color: received ? context.p.textMuted : context.p.text)),
           ),
-          if ((p['size'] ?? '') != '') Text('${p['size']}', style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
+          if ((p['size'] ?? '') != '')
+            Text('${p['size']}', style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
+          // Damaged tag? Re-tag an outstanding piece and receive it.
+          if (!received && !closed)
+            IconButton(
+              tooltip: 'Re-tag (damaged tag)',
+              visualDensity: VisualDensity.compact,
+              onPressed: () => _retag(p['pieceId'] as String),
+              icon: Icon(Icons.sync_alt, size: 18, color: context.p.accent),
+            ),
         ],
       ),
     );

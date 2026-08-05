@@ -93,6 +93,11 @@ class ProductionRepository {
     return (data as Map).cast<String, dynamic>();
   }
 
+  /// Re-tag a piece (bind a fresh tag code to an outstanding piece).
+  Future<void> retagPiece(String pieceId, String newTag) async {
+    await ref.read(apiClientProvider).post('/production/pieces/$pieceId/retag', body: {'newTag': newTag});
+  }
+
   Future<Map<String, dynamic>> lookupPiece(String tag) async {
     final data = await ref.read(apiClientProvider).get('/production/pieces/$tag');
     return (data as Map).cast<String, dynamic>();

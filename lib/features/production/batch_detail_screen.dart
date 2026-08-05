@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:printing/printing.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/async_view.dart';
 import '../../widgets/theme_button.dart';
+import 'production_pdf.dart';
 import 'production_providers.dart';
 
 class BatchDetailScreen extends ConsumerWidget {
@@ -157,8 +159,17 @@ class BatchDetailScreen extends ConsumerWidget {
               Text('${tags.length} tag codes generated',
                   style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
               const SizedBox(height: 4),
-              Text('Attach these to the pieces. (PDF label printing comes next.)',
+              Text('Print the QR labels and attach one to each piece.',
                   style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                onPressed: () async {
+                  final bytes = await buildLabelSheetPdf(tags);
+                  await Printing.layoutPdf(onLayout: (_) async => bytes);
+                },
+                icon: const Icon(Icons.print_outlined),
+                label: const Text('Print / share QR labels'),
+              ),
               const SizedBox(height: 12),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxHeight: 260),
