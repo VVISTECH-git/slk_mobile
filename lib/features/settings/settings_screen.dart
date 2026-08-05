@@ -5,6 +5,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/theme_button.dart';
 import '../../theme/theme_controller.dart';
 import '../../widgets/async_view.dart';
+import '../production/production_providers.dart';
 import 'business_edit_screen.dart';
 import 'settings_providers.dart';
 import 'staff_dialog.dart';
@@ -163,9 +164,172 @@ class SettingsScreen extends ConsumerWidget {
               _AttrGroup(title: 'Techniques', kind: 'technique', rows: (d['techniques'] as List?) ?? [], onChanged: () => ref.invalidate(settingsProvider)),
               _AttrGroup(title: 'Dye types', kind: 'dye', rows: (d['dyeTypes'] as List?) ?? [], onChanged: () => ref.invalidate(settingsProvider)),
               _AttrGroup(title: 'Border styles', kind: 'border', rows: (d['borderStyles'] as List?) ?? [], onChanged: () => ref.invalidate(settingsProvider)),
+              const SizedBox(height: 20),
+
+              // ---- Production config ----
+              const _VendorsSection(),
+              const SizedBox(height: 20),
+              const _StagesSection(),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// Vendors (external job-work processors) — add / rename / delete.
+class _VendorsSection extends ConsumerWidget {
+  const _VendorsSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final vendors = ref.watch(prodVendorsProvider);
+    final repo = ref.read(productionRepositoryProvider);
+    Future<void> guard(Future<void> Function() action) async {
+      try {
+        await action();
+        ref.invalidate(prodVendorsProvider);
+        if (context.mounted) showOk(context, 'Saved.');
+      } catch (e) {
+        if (context.mounted) showError(context, e);
+      }
+    }
+
+    return Column(
+      children: [
+        _SectionHeader('Vendors', onAdd: () async {
+          final res = await _vendorDialog(context);
+          if (res != null) await guard(() => repo.saveVendor(name: res.name, phone: res.phone, address: res.address));
+        }),
+        ...vendors.maybeWhen(
+          data: (list) => [
+            for (final v in list)
+              _NamedRow(
+                name: '${(v as Map)['name']}',
+                sub: '${v['phone'] ?? 'no phone'} · holding ${v['holding']} pcs',
+                onDelete: (v['holding'] as num?) == 0
+                    ? () => guard(() => repo.deleteVendor(v['id'] as String))
+                    : null,
+                onEdit: () async {
+                  final res = await _vendorDialog(context, existing: v.cast<String, dynamic>());
+                  if (res != null) {
+                    await guard(() => repo.saveVendor(
+                        id: v['id'] as String, name: res.name, phone: res.phone, address: res.address));
+                  }
+                },
+              ),
+          ],
+          orElse: () => [const Padding(padding: EdgeInsets.all(8), child: LinearProgressIndicator())],
+        ),
+      ],
+    );
+  }
+
+  Future<({String name, String phone, String address})?> _vendorDialog(
+    BuildContext context, {
+    Map<String, dynamic>? existing,
+  }) {
+    final name = TextEditingController(text: existing?['name'] as String? ?? '');
+    final phone = TextEditingController(text: existing?['phone'] as String? ?? '');
+    final address = TextEditingController(text: existing?['address'] as String? ?? '');
+    return showDialog<({String name, String phone, String address})>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(existing == null ? 'New vendor' : 'Edit vendor'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: name, autofocus: true, decoration: const InputDecoration(labelText: 'Name')),
+            const SizedBox(height: 10),
+            TextField(controller: phone, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Phone (optional)')),
+            const SizedBox(height: 10),
+            TextField(controller: address, decoration: const InputDecoration(labelText: 'Address (optional)')),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, (name: name.text.trim(), phone: phone.text.trim(), address: address.text.trim())),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Job stages — the ordered processing pipeline (Prep, Screen Print, …).
+class _StagesSection extends ConsumerWidget {
+  const _StagesSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stages = ref.watch(prodStagesProvider);
+    final repo = ref.read(productionRepositoryProvider);
+    Future<void> guard(Future<void> Function() action) async {
+      try {
+        await action();
+        ref.invalidate(prodStagesProvider);
+        if (context.mounted) showOk(context, 'Saved.');
+      } catch (e) {
+        if (context.mounted) showError(context, e);
+      }
+    }
+
+    return Column(
+      children: [
+        _SectionHeader('Job stages', onAdd: () async {
+          final res = await _stageDialog(context);
+          if (res != null) await guard(() => repo.saveStage(name: res.name, sequence: res.sequence));
+        }),
+        ...stages.maybeWhen(
+          data: (list) => [
+            for (final s in list)
+              _NamedRow(
+                name: '${(s as Map)['sequence']}. ${s['name']}',
+                sub: 'Processing stage',
+                onDelete: () => guard(() => repo.deleteStage(s['id'] as String)),
+                onEdit: () async {
+                  final res = await _stageDialog(context, existing: s.cast<String, dynamic>());
+                  if (res != null) {
+                    await guard(() => repo.saveStage(id: s['id'] as String, name: res.name, sequence: res.sequence));
+                  }
+                },
+              ),
+          ],
+          orElse: () => [const Padding(padding: EdgeInsets.all(8), child: LinearProgressIndicator())],
+        ),
+      ],
+    );
+  }
+
+  Future<({String name, int sequence})?> _stageDialog(BuildContext context, {Map<String, dynamic>? existing}) {
+    final name = TextEditingController(text: existing?['name'] as String? ?? '');
+    final seq = TextEditingController(text: '${existing?['sequence'] ?? ''}');
+    return showDialog<({String name, int sequence})>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(existing == null ? 'New stage' : 'Edit stage'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: name, autofocus: true, decoration: const InputDecoration(labelText: 'Stage name')),
+            const SizedBox(height: 10),
+            TextField(
+              controller: seq,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Order (1, 2, 3…)'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, (name: name.text.trim(), sequence: int.tryParse(seq.text.trim()) ?? 0)),
+            child: const Text('Save'),
+          ),
+        ],
       ),
     );
   }
@@ -285,10 +449,11 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _NamedRow extends StatelessWidget {
-  const _NamedRow({required this.name, required this.sub, this.onDelete});
+  const _NamedRow({required this.name, required this.sub, this.onDelete, this.onEdit});
   final String name;
   final String sub;
   final VoidCallback? onDelete;
+  final VoidCallback? onEdit;
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -296,9 +461,17 @@ class _NamedRow extends StatelessWidget {
         dense: true,
         title: Text(name),
         subtitle: Text(sub, style: const TextStyle(fontSize: 12)),
-        trailing: onDelete == null
-            ? Icon(Icons.lock_outline, size: 16, color: context.p.textSecondary)
-            : IconButton(onPressed: onDelete, icon: Icon(Icons.delete_outline, color: context.p.danger)),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (onEdit != null)
+              IconButton(onPressed: onEdit, icon: Icon(Icons.edit_outlined, size: 20, color: context.p.textSecondary)),
+            if (onDelete != null)
+              IconButton(onPressed: onDelete, icon: Icon(Icons.delete_outline, color: context.p.danger))
+            else if (onEdit == null)
+              Icon(Icons.lock_outline, size: 16, color: context.p.textSecondary),
+          ],
+        ),
       ),
     );
   }

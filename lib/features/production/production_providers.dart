@@ -97,4 +97,30 @@ class ProductionRepository {
     final data = await ref.read(apiClientProvider).get('/production/pieces/$tag');
     return (data as Map).cast<String, dynamic>();
   }
+
+  // ---- Vendors & stages (owner config) ----
+
+  Future<void> saveVendor({String? id, required String name, String? phone, String? address}) async {
+    final api = ref.read(apiClientProvider);
+    final body = {'name': name, if (phone != null) 'phone': phone, if (address != null) 'address': address};
+    if (id == null) {
+      await api.post('/production/vendors', body: body);
+    } else {
+      await api.patch('/production/vendors/$id', body: body);
+    }
+  }
+
+  Future<void> deleteVendor(String id) => ref.read(apiClientProvider).delete('/production/vendors/$id');
+
+  Future<void> saveStage({String? id, required String name, int sequence = 0}) async {
+    final api = ref.read(apiClientProvider);
+    final body = {'name': name, 'sequence': sequence};
+    if (id == null) {
+      await api.post('/production/stages', body: body);
+    } else {
+      await api.patch('/production/stages/$id', body: body);
+    }
+  }
+
+  Future<void> deleteStage(String id) => ref.read(apiClientProvider).delete('/production/stages/$id');
 }
