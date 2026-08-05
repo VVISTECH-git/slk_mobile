@@ -20,6 +20,13 @@ import 'features/dashboard/dashboard_screen.dart';
 import 'features/invoices/invoices_screen.dart';
 import 'features/reports/reconciliation_screen.dart';
 import 'features/settings/settings_screen.dart';
+import 'features/production/production_screen.dart';
+import 'features/production/batches_screen.dart';
+import 'features/production/batch_detail_screen.dart';
+import 'features/production/dispatch_screen.dart';
+import 'features/production/job_board_screen.dart';
+import 'features/production/receive_screen.dart';
+import 'features/production/piece_lookup_screen.dart';
 import 'widgets/placeholder_screen.dart';
 
 /// App router. Redirects between splash / login / app based on auth status; a
@@ -87,6 +94,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/transfers/:id',
         builder: (_, state) => TransferDetailScreen(transferId: state.pathParameters['id']!),
       ),
+
+      // Production / Job Work
+      GoRoute(path: '/production', builder: (_, _) => const ProductionScreen()),
+      GoRoute(path: '/production/batches', builder: (_, _) => const BatchesScreen()),
+      GoRoute(
+        path: '/production/batches/:id',
+        builder: (_, state) => BatchDetailScreen(batchId: state.pathParameters['id']!),
+      ),
+      GoRoute(path: '/production/dispatch', builder: (_, _) => const DispatchScreen()),
+      GoRoute(path: '/production/board', builder: (_, _) => const JobBoardScreen()),
+      GoRoute(
+        path: '/production/orders/:id',
+        builder: (_, state) => ReceiveScreen(orderId: state.pathParameters['id']!),
+      ),
+      GoRoute(path: '/production/lookup', builder: (_, _) => const PieceLookupScreen()),
 
       // Dashboard, invoices, reports, settings
       GoRoute(path: '/dashboard', builder: (_, _) => const DashboardScreen()),
