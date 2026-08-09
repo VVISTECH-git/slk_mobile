@@ -23,10 +23,11 @@ class ApiClient {
     _dio = Dio(
       BaseOptions(
         baseUrl: Config.apiRoot,
-        // Generous connect timeout: Render's free tier cold-starts (~40s) after
-        // ~15 min idle, and the first request must wait for it to wake.
-        connectTimeout: const Duration(seconds: 60),
-        receiveTimeout: const Duration(seconds: 60),
+        // Fail in a reasonable window so a slow/unreachable server surfaces a
+        // retry rather than an endless spinner. (Backend should be always-on;
+        // this is the safety net.)
+        connectTimeout: const Duration(seconds: 25),
+        receiveTimeout: const Duration(seconds: 25),
         // Don't throw on non-2xx — we inspect the envelope ourselves.
         validateStatus: (_) => true,
       ),

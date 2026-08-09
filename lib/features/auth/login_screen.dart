@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -83,9 +85,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       future: _optionsFuture,
                       builder: (context, snap) {
                         if (snap.connectionState == ConnectionState.waiting) {
-                          return const Padding(
-                            padding: EdgeInsets.all(40),
-                            child: CircularProgressIndicator(),
+                          return _Connecting(
+                            onRetry: () => setState(() {
+                              _optionsFuture =
+                                  ref.read(authControllerProvider.notifier).loginOptions();
+                            }),
                           );
                         }
                         if (snap.hasError) {
@@ -215,6 +219,57 @@ class _Brand extends StatelessWidget {
         Text('Sree Lakshmi Kalamkari',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.p.primaryDark)),
+      ],
+    );
+  }
+}
+
+/// Loading state for the login options fetch. Shows the brand + a clear
+/// "Connecting…" message, and after a few seconds offers a Retry — so a slow
+/// or waking server never looks like a frozen, endless spinner.
+class _Connecting extends StatefulWidget {
+  const _Connecting({required this.onRetry});
+  final VoidCallback onRetry;
+
+  @override
+  State<_Connecting> createState() => _ConnectingState();
+}
+
+class _ConnectingState extends State<_Connecting> {
+  bool _slow = false;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer(const Duration(seconds: 6), () {
+      if (mounted) setState(() => _slow = true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const _Brand(),
+        const SizedBox(height: 28),
+        const CircularProgressIndicator(),
+        const SizedBox(height: 16),
+        Text('Connecting to the server…',
+            textAlign: TextAlign.center, style: TextStyle(color: context.p.textSecondary)),
+        if (_slow) ...[
+          const SizedBox(height: 8),
+          Text('Taking longer than usual — tap retry if it doesn\'t load.',
+              textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: context.p.textMuted)),
+          const SizedBox(height: 12),
+          FilledButton.tonal(onPressed: widget.onRetry, child: const Text('Retry')),
+        ],
       ],
     );
   }
