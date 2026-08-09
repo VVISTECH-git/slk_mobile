@@ -84,6 +84,8 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
+      groups:
+        - signing # must contain the secure var CERTIFICATE_PRIVATE_KEY
       vars:
         BUNDLE_ID: "com.vvistech.slkMobile"
     scripts:
