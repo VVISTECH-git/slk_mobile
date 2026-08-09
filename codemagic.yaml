@@ -95,21 +95,24 @@ workflows:
       - name: Install CocoaPods
         script: find . -name "Podfile" -execdir pod install \;
       - name: Set up code signing
-        # The CLI can't create a certificate without a private key ("Cannot
-        # create resource without certificate private key"). So: generate an RSA
-        # key, create the distribution cert WITH it, then create the App Store
-        # profile with the same key, import to the keychain, and wire it up.
+        # Reuse ONE persistent distribution certificate instead of creating a new
+        # one every build. Apple caps you at 2 distribution certs, so per-build
+        # creation eventually fails with a 409 ("you already have a current
+        # certificate"). The private key is stored once as the secure Codemagic
+        # env var CERTIFICATE_PRIVATE_KEY; fetch-signing-files finds the cert made
+        # with that key and reuses it, only creating one the very first time.
+        #
+        # One-time setup (see repo notes):
+        #   1. openssl genrsa 2048  → paste output into a SECURE env var named
+        #      CERTIFICATE_PRIVATE_KEY (scope: this app / ios-workflow).
+        #   2. Revoke any stale distribution certs in the Apple Developer portal
+        #      so the first build has a free slot to create the reusable cert.
         script: |
           set -ex
           keychain initialize
-          openssl genrsa -out /tmp/cert_key.pem 2048
-          app-store-connect certificates create \
-            --type IOS_DISTRIBUTION \
-            --certificate-key=@file:/tmp/cert_key.pem \
-            --save
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
-            --certificate-key=@file:/tmp/cert_key.pem \
+            --certificate-key @env:CERTIFICATE_PRIVATE_KEY \
             --create
           keychain add-certificates
           echo "══ signing identities in keychain ══"
