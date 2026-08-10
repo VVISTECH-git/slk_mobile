@@ -5,6 +5,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/theme_button.dart';
 import '../../theme/theme_controller.dart';
 import '../../widgets/async_view.dart';
+import '../home/home_layout_picker.dart';
 import '../production/production_providers.dart';
 import 'business_edit_screen.dart';
 import 'settings_providers.dart';
@@ -67,6 +68,9 @@ class SettingsScreen extends ConsumerWidget {
               // ---- Appearance ----
               _SectionHeader('Appearance'),
               const _ThemePicker(),
+              const SizedBox(height: 18),
+              _SectionHeader('Home layout'),
+              const HomeLayoutTiles(),
               const SizedBox(height: 20),
 
               // ---- Business profile ----
