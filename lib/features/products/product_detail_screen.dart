@@ -8,6 +8,7 @@ import '../../core/format.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/theme_button.dart';
 import '../../widgets/async_view.dart';
+import '../../widgets/photo_viewer.dart';
 import 'product_providers.dart';
 
 /// Read view of a product: identity, tax, and each variant with its prices and
@@ -231,14 +232,13 @@ class _PhotoGallery extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: GestureDetector(
-                        onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                          fullscreenDialog: true,
-                          builder: (_) => _FullScreenPhotos(
-                            images: data,
-                            initialIndex: i,
-                            title: title,
-                          ),
-                        )),
+                        onTap: () => openPhotoViewer(
+                          context,
+                          images: data,
+                          initialIndex: i,
+                          title: title,
+                          heroPrefix: 'photo_${title}_',
+                        ),
                         child: Hero(
                           tag: 'photo_${title}_$i',
                           child: ClipRRect(
@@ -262,58 +262,6 @@ class _PhotoGallery extends StatelessWidget {
           const SizedBox(height: 12),
         ],
       ],
-    );
-  }
-}
-
-// Full-screen, swipeable, pinch-to-zoom viewer for a colour's photos.
-class _FullScreenPhotos extends StatefulWidget {
-  const _FullScreenPhotos({required this.images, required this.initialIndex, required this.title});
-  final List<String> images;
-  final int initialIndex;
-  final String title;
-
-  @override
-  State<_FullScreenPhotos> createState() => _FullScreenPhotosState();
-}
-
-class _FullScreenPhotosState extends State<_FullScreenPhotos> {
-  late final PageController _controller = PageController(initialPage: widget.initialIndex);
-  late int _index = widget.initialIndex;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final count = widget.images.length;
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        title: Text(
-          widget.title.isEmpty ? 'Photo ${_index + 1} of $count' : '${widget.title} · ${_index + 1}/$count',
-        ),
-      ),
-      body: PageView.builder(
-        controller: _controller,
-        itemCount: count,
-        onPageChanged: (i) => setState(() => _index = i),
-        itemBuilder: (_, i) => InteractiveViewer(
-          minScale: 1,
-          maxScale: 5,
-          child: Center(
-            child: Hero(
-              tag: 'photo_${widget.title}_$i',
-              child: Image.memory(base64Decode(widget.images[i]), fit: BoxFit.contain),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/theme_button.dart';
 import '../../widgets/async_view.dart';
+import '../../widgets/photo_viewer.dart';
 import '../settings/settings_providers.dart';
 import 'product_providers.dart';
 
@@ -723,6 +724,25 @@ class _ColorPhotoBlock extends StatelessWidget {
       return null;
     }
 
+    // All captured photos for this colour, in display order (slots first, then
+    // extras) — used by the full-screen viewer so any tapped photo can swipe.
+    final ordered = <_Shot>[
+      for (final s in slots)
+        if (shotFor(s['id'] as String) != null) shotFor(s['id'] as String)!,
+      ...extras,
+    ];
+    VoidCallback? viewer(_Shot? shot) {
+      if (shot == null) return null;
+      final index = ordered.indexOf(shot);
+      if (index < 0) return null;
+      return () => openPhotoViewer(
+            context,
+            images: [for (final s in ordered) s.data],
+            initialIndex: index,
+            title: label,
+          );
+    }
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -748,6 +768,7 @@ class _ColorPhotoBlock extends StatelessWidget {
                       guide: s['guide'] as String?,
                       shot: shotFor(s['id'] as String),
                       onTap: () => onAdd(slotId: s['id'] as String),
+                      onView: viewer(shotFor(s['id'] as String)),
                       onRemove: () {
                         final sh = shotFor(s['id'] as String);
                         if (sh != null) onRemove(sh);
@@ -760,6 +781,7 @@ class _ColorPhotoBlock extends StatelessWidget {
                     guide: null,
                     shot: e,
                     onTap: () {},
+                    onView: viewer(e),
                     onRemove: () => onRemove(e),
                   ),
                 if (slots.isNotEmpty || extras.length < 8)
@@ -781,6 +803,7 @@ class _SlotTile extends StatelessWidget {
     required this.shot,
     required this.onTap,
     required this.onRemove,
+    this.onView,
   });
   final String label;
   final bool required;
@@ -788,6 +811,7 @@ class _SlotTile extends StatelessWidget {
   final _Shot? shot;
   final VoidCallback onTap;
   final VoidCallback onRemove;
+  final VoidCallback? onView; // tap a captured photo to open it full-screen
 
   static const double _size = 108;
 
@@ -838,7 +862,7 @@ class _SlotTile extends StatelessWidget {
             clipBehavior: Clip.none,
             children: [
               InkWell(
-                onTap: filled ? null : onTap,
+                onTap: filled ? onView : onTap,
                 borderRadius: BorderRadius.circular(10),
                 child: Container(
                   height: _size,

@@ -2,7 +2,7 @@ name: slk_mobile
 description: "Sree Lakshmi Kalamkari — inventory & billing (mobile)."
 publish_to: 'none'
 
-version: 1.2.0+8
+version: 1.2.0+9
 
 environment:
   sdk: ^3.11.1
