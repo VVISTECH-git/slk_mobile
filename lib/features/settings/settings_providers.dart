@@ -12,6 +12,12 @@ final settingsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) 
 
 final settingsRepositoryProvider = Provider((ref) => SettingsRepository(ref));
 
+/// Photo-guide slots for one category (owner editor + product form both read this).
+final categoryPhotoSlotsProvider =
+    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>((ref, categoryId) async {
+  return ref.watch(settingsRepositoryProvider).photoSlots(categoryId);
+});
+
 class SettingsRepository {
   SettingsRepository(this.ref);
   final Ref ref;
@@ -69,6 +75,37 @@ class SettingsRepository {
 
   Future<void> deleteCategory(String id) async {
     await ref.read(apiClientProvider).delete('/settings/categories/$id');
+  }
+
+  // ---- category photo guides (shot templates) ----
+  Future<List<Map<String, dynamic>>> photoSlots(String categoryId) async {
+    final data = await ref.read(apiClientProvider).get('/categories/$categoryId/photo-slots');
+    return ((data as List?) ?? []).map((e) => (e as Map).cast<String, dynamic>()).toList();
+  }
+
+  Future<void> savePhotoSlot({
+    String? id,
+    required String categoryId,
+    required String label,
+    String? guide, // base64; pass '' to clear, null to leave unchanged
+    required bool required,
+    required int position,
+  }) async {
+    final body = {
+      'label': label,
+      'required': required,
+      'position': position,
+      if (guide != null) 'guide': guide,
+    };
+    if (id == null) {
+      await ref.read(apiClientProvider).post('/categories/$categoryId/photo-slots', body: body);
+    } else {
+      await ref.read(apiClientProvider).patch('/photo-slots/$id', body: body);
+    }
+  }
+
+  Future<void> deletePhotoSlot(String id) async {
+    await ref.read(apiClientProvider).delete('/photo-slots/$id');
   }
 
   // ---- attributes (fabric | technique | dye | border) ----

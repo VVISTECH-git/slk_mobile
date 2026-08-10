@@ -7,6 +7,7 @@ import '../../theme/theme_controller.dart';
 import '../../widgets/async_view.dart';
 import '../production/production_providers.dart';
 import 'business_edit_screen.dart';
+import 'photo_guide_screen.dart';
 import 'settings_providers.dart';
 import 'staff_dialog.dart';
 
@@ -149,9 +150,21 @@ class SettingsScreen extends ConsumerWidget {
               }),
               ...categories.map((c) {
                 final m = (c as Map);
+                void openGuide() => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => PhotoGuideScreen(
+                        categoryId: m['id'] as String,
+                        categoryName: '${m['path'] ?? m['name']}',
+                      ),
+                    ));
                 return _NamedRow(
                   name: '${m['path'] ?? m['name']}',
-                  sub: 'Code: ${m['code'] ?? '—'} · ${m['inUse']} in use',
+                  sub: 'Code: ${m['code'] ?? '—'} · ${m['inUse']} in use · tap for photo guide',
+                  onTap: openGuide,
+                  leadingAction: IconButton(
+                    tooltip: 'Photo guide',
+                    icon: Icon(Icons.photo_camera_back_outlined, size: 20, color: context.p.primary),
+                    onPressed: openGuide,
+                  ),
                   onDelete: (m['inUse'] as num?) == 0
                       ? () => _guard(context, ref, () => _repo(ref).deleteCategory(m['id'] as String))
                       : null,
@@ -449,26 +462,31 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _NamedRow extends StatelessWidget {
-  const _NamedRow({required this.name, required this.sub, this.onDelete, this.onEdit});
+  const _NamedRow(
+      {required this.name, required this.sub, this.onDelete, this.onEdit, this.onTap, this.leadingAction});
   final String name;
   final String sub;
   final VoidCallback? onDelete;
   final VoidCallback? onEdit;
+  final VoidCallback? onTap;
+  final Widget? leadingAction; // shown before edit/delete (e.g. a photo-guide button)
   @override
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
         dense: true,
+        onTap: onTap,
         title: Text(name),
         subtitle: Text(sub, style: const TextStyle(fontSize: 12)),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (leadingAction != null) leadingAction!,
             if (onEdit != null)
               IconButton(onPressed: onEdit, icon: Icon(Icons.edit_outlined, size: 20, color: context.p.textSecondary)),
             if (onDelete != null)
               IconButton(onPressed: onDelete, icon: Icon(Icons.delete_outline, color: context.p.danger))
-            else if (onEdit == null)
+            else if (onEdit == null && leadingAction == null)
               Icon(Icons.lock_outline, size: 16, color: context.p.textSecondary),
           ],
         ),

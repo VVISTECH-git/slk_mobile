@@ -8,7 +8,16 @@ import 'package:image_picker/image_picker.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/theme_button.dart';
 import '../../widgets/async_view.dart';
+import '../settings/settings_providers.dart';
 import 'product_providers.dart';
+
+// One captured photo: its base64 data and, optionally, the category shot slot
+// it fills (null = an extra/freeform photo).
+class _Shot {
+  _Shot({this.slotId, required this.data});
+  String? slotId;
+  String data;
+}
 
 // Holds the controllers for one variant row (disposed with the screen).
 class _VariantForm {
@@ -20,7 +29,6 @@ class _VariantForm {
   final cost = TextEditingController();
   final b2c = TextEditingController();
   final b2b = TextEditingController();
-  final List<String> images = []; // base64 JPEG, up to 5
   final Map<String, TextEditingController> stock = {}; // locationId -> opening qty
 
   TextEditingController stockFor(String locationId) =>
@@ -35,7 +43,6 @@ class _VariantForm {
         'cost': cost.text.trim(),
         'b2c': b2c.text.trim(),
         'b2b': b2b.text.trim(),
-        'images': images,
         'inventory': [
           for (final l in locations)
             {
@@ -91,6 +98,82 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   final List<_VariantForm> _variants = [_VariantForm()];
 
+  // Photos grouped per colour key (normalised). Shared across every size of a
+  // colour. Each shot may fill a category photo slot.
+  final Map<String, List<_Shot>> _photosByColor = {};
+
+  String _ck(String c) => c.trim().toLowerCase();
+
+  // The distinct colours currently entered, in order. `raw` is the colour label
+  // to store ("" for none); `label` is what we show.
+  List<({String key, String raw, String label})> _colorGroups() {
+    final seen = <String>{};
+    final out = <({String key, String raw, String label})>[];
+    for (final v in _variants) {
+      if (!v.hasContent) continue;
+      final key = _ck(v.color.text);
+      if (seen.add(key)) {
+        final raw = v.color.text.trim();
+        out.add((key: key, raw: raw, label: raw.isEmpty ? 'No colour' : raw));
+      }
+    }
+    if (out.isEmpty) out.add((key: '', raw: '', label: 'Photos'));
+    return out;
+  }
+
+  Future<void> _pickForColor(String colorKey, {String? slotId, required ImageSource source}) async {
+    try {
+      final x = await ImagePicker().pickImage(source: source, maxWidth: 1200, maxHeight: 1200, imageQuality: 72);
+      if (x == null) return;
+      final data = base64Encode(await x.readAsBytes());
+      setState(() {
+        final list = _photosByColor.putIfAbsent(colorKey, () => []);
+        if (slotId != null) {
+          final idx = list.indexWhere((s) => s.slotId == slotId);
+          if (idx >= 0) {
+            list[idx].data = data;
+          } else {
+            list.add(_Shot(slotId: slotId, data: data));
+          }
+        } else {
+          list.add(_Shot(data: data));
+        }
+      });
+    } catch (e) {
+      if (mounted) showError(context, 'Could not add photo: $e');
+    }
+  }
+
+  void _removeShot(String colorKey, _Shot shot) {
+    setState(() => _photosByColor[colorKey]?.remove(shot));
+  }
+
+  void _addPhotoSheet(String colorKey, {String? slotId}) {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Wrap(children: [
+          ListTile(
+            leading: const Icon(Icons.photo_camera_outlined),
+            title: const Text('Take a photo'),
+            onTap: () {
+              Navigator.pop(context);
+              _pickForColor(colorKey, slotId: slotId, source: ImageSource.camera);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.photo_library_outlined),
+            title: const Text('Choose from gallery'),
+            onTap: () {
+              Navigator.pop(context);
+              _pickForColor(colorKey, slotId: slotId, source: ImageSource.gallery);
+            },
+          ),
+        ]),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -130,7 +213,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         vf.cost.text = (v['cost'] ?? '') as String;
         vf.b2c.text = (v['b2c'] ?? '') as String;
         vf.b2b.text = (v['b2b'] ?? '') as String;
-        vf.images.addAll(((v['images'] as List?) ?? []).cast<String>());
         final inv = (v['inv'] as Map?)?.cast<String, dynamic>() ?? {};
         inv.forEach((locId, m) {
           vf.stockFor(locId).text = ((m as Map)['onHand'] ?? '0').toString();
@@ -138,6 +220,21 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         _variants.add(vf);
       }
       if (_variants.isEmpty) _variants.add(_VariantForm());
+
+      // Photos grouped per colour.
+      _photosByColor.clear();
+      for (final raw in (p['photoGroups'] as List? ?? [])) {
+        final g = (raw as Map).cast<String, dynamic>();
+        final key = (g['colorKey'] ?? '') as String;
+        final shots = <_Shot>[];
+        for (final im in (g['images'] as List? ?? [])) {
+          final m = (im as Map).cast<String, dynamic>();
+          final data = (m['data'] ?? '') as String;
+          if (data.isEmpty) continue;
+          shots.add(_Shot(slotId: m['slotId'] as String?, data: data));
+        }
+        _photosByColor[key] = shots;
+      }
     } catch (e) {
       if (mounted) showError(context, e);
     } finally {
@@ -192,9 +289,28 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       showError(context, 'Add at least one variant (colour/size or price).');
       return;
     }
-    if (filled.any((v) => v.images.isEmpty)) {
-      showError(context, 'Add at least one photo to every variant.');
-      return;
+
+    // Photos are per colour. Every colour needs its required shots (or, if the
+    // category defines no shot template, at least one photo).
+    final slots = _categoryId == null
+        ? const <Map<String, dynamic>>[]
+        : ((ref.read(categoryPhotoSlotsProvider(_categoryId!)).valueOrNull ?? const [])
+            .cast<Map<String, dynamic>>());
+    final requiredSlots = slots.where((s) => s['required'] == true).toList();
+    final groups = _colorGroups();
+    for (final g in groups) {
+      final shots = _photosByColor[g.key] ?? const [];
+      if (requiredSlots.isNotEmpty) {
+        for (final s in requiredSlots) {
+          if (!shots.any((sh) => sh.slotId == s['id'])) {
+            showError(context, 'Add the “${s['label']}” photo for ${g.label}.');
+            return;
+          }
+        }
+      } else if (shots.isEmpty) {
+        showError(context, 'Add at least one photo for ${g.label}.');
+        return;
+      }
     }
 
     final input = {
@@ -213,6 +329,16 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       'gstRate': _gst.text.trim(),
       'pushToShopify': false,
       'variants': [for (final v in filled) v.toJson(locations)],
+      'colorPhotos': [
+        for (final g in groups)
+          {
+            'color': g.raw,
+            'images': [
+              for (final sh in (_photosByColor[g.key] ?? const []))
+                {'slotId': sh.slotId, 'data': sh.data}
+            ],
+          }
+      ],
     };
 
     setState(() => _busy = true);
@@ -374,6 +500,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                   }),
                   onChanged: () => setState(() {}),
                 ),
+              const SizedBox(height: 20),
+
+              // Photos — grouped per colour, guided by the category's shot template.
+              _section('Photos by colour'),
+              _photosSection(),
             ],
           );
         },
@@ -397,6 +528,39 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   Widget _section(String t) =>
       Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(t, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)));
+
+  Widget _photosSection() {
+    if (_categoryId == null) {
+      return Text('Pick a category first to add photos.',
+          style: TextStyle(fontSize: 13, color: context.p.textSecondary));
+    }
+    final slotsAsync = ref.watch(categoryPhotoSlotsProvider(_categoryId!));
+    final slots = (slotsAsync.valueOrNull ?? const []).cast<Map<String, dynamic>>();
+    final groups = _colorGroups();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Text(
+            slots.isEmpty
+                ? 'Photos are shared across all sizes of a colour. Tip: set a photo guide for this category in Settings to prompt specific shots.'
+                : 'Photos are shared across all sizes of a colour. Tap each labelled shot to capture it.',
+            style: TextStyle(fontSize: 12, color: context.p.textSecondary, height: 1.35),
+          ),
+        ),
+        for (final g in groups)
+          _ColorPhotoBlock(
+            key: ValueKey('photos_${g.key}'),
+            label: g.label,
+            shots: _photosByColor[g.key] ?? const [],
+            slots: slots,
+            onAdd: ({String? slotId}) => _addPhotoSheet(g.key, slotId: slotId),
+            onRemove: (shot) => _removeShot(g.key, shot),
+          ),
+      ],
+    );
+  }
 
   Widget _attrDropdown(String label, dynamic rows, String? value, ValueChanged<String?> onChanged) {
     final list = (rows as List?) ?? [];
@@ -454,50 +618,7 @@ class _VariantCard extends StatelessWidget {
   final List<Map<String, dynamic>> locations;
   final bool canRemove;
   final VoidCallback onRemove;
-  final VoidCallback onChanged;
-
-  Future<void> _pick(BuildContext context, ImageSource source) async {
-    try {
-      final x = await ImagePicker().pickImage(
-        source: source,
-        maxWidth: 1200,
-        maxHeight: 1200,
-        imageQuality: 72,
-      );
-      if (x == null) return;
-      final bytes = await x.readAsBytes();
-      variant.images.add(base64Encode(bytes));
-      onChanged();
-    } catch (e) {
-      if (context.mounted) showError(context, 'Could not add photo: $e');
-    }
-  }
-
-  void _addPhoto(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (_) => SafeArea(
-        child: Wrap(children: [
-          ListTile(
-            leading: const Icon(Icons.photo_camera_outlined),
-            title: const Text('Take a photo'),
-            onTap: () {
-              Navigator.pop(context);
-              _pick(context, ImageSource.camera);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.photo_library_outlined),
-            title: const Text('Choose from gallery'),
-            onTap: () {
-              Navigator.pop(context);
-              _pick(context, ImageSource.gallery);
-            },
-          ),
-        ]),
-      ),
-    );
-  }
+  final VoidCallback onChanged; // called when the colour changes (refreshes the photo section)
 
   @override
   Widget build(BuildContext context) {
@@ -520,70 +641,14 @@ class _VariantCard extends StatelessWidget {
                   ),
               ],
             ),
-            // ---- Photos (required: 1–5) ----
             Row(children: [
-              Text('Photos *', style: TextStyle(fontSize: 12, color: context.p.textSecondary, fontWeight: FontWeight.w600)),
-              const SizedBox(width: 6),
-              Text('${variant.images.length}/5', style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
-            ]),
-            const SizedBox(height: 6),
-            SizedBox(
-              height: 84,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  for (int j = 0; j < variant.images.length; j++)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.memory(base64Decode(variant.images[j]),
-                                height: 84, width: 84, fit: BoxFit.cover, cacheWidth: 220, cacheHeight: 220),
-                          ),
-                          Positioned(
-                            top: -6,
-                            right: -6,
-                            child: IconButton(
-                              icon: CircleAvatar(radius: 11, backgroundColor: context.p.danger, child: Icon(Icons.close, size: 14, color: Colors.white)),
-                              onPressed: () {
-                                variant.images.removeAt(j);
-                                onChanged();
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  if (variant.images.length < 5)
-                    InkWell(
-                      onTap: () => _addPhoto(context),
-                      borderRadius: BorderRadius.circular(10),
-                      child: Container(
-                        height: 84,
-                        width: 84,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: context.p.border),
-                          color: context.p.surface1,
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.add_a_photo_outlined, color: context.p.primary),
-                            SizedBox(height: 2),
-                            Text('Add', style: TextStyle(fontSize: 11, color: context.p.textSecondary)),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
+              Expanded(
+                child: TextField(
+                  controller: variant.color,
+                  decoration: const InputDecoration(labelText: 'Colour'),
+                  onChanged: (_) => onChanged(),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Row(children: [
-              Expanded(child: TextField(controller: variant.color, decoration: const InputDecoration(labelText: 'Colour'))),
               const SizedBox(width: 10),
               Expanded(child: TextField(controller: variant.size, decoration: const InputDecoration(labelText: 'Size'))),
             ]),
@@ -627,4 +692,278 @@ class _VariantCard extends StatelessWidget {
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         decoration: InputDecoration(labelText: label, prefixText: '₹'),
       );
+}
+
+// Photos for one colour: labelled shot slots (with reference guides) when the
+// category defines a template, otherwise a simple photo grid. Photos are shared
+// across every size of this colour.
+class _ColorPhotoBlock extends StatelessWidget {
+  const _ColorPhotoBlock({
+    super.key,
+    required this.label,
+    required this.shots,
+    required this.slots,
+    required this.onAdd,
+    required this.onRemove,
+  });
+  final String label;
+  final List<_Shot> shots;
+  final List<Map<String, dynamic>> slots;
+  final void Function({String? slotId}) onAdd;
+  final void Function(_Shot shot) onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final slotIds = slots.map((s) => s['id'] as String).toSet();
+    final extras = shots.where((s) => s.slotId == null || !slotIds.contains(s.slotId)).toList();
+    _Shot? shotFor(String slotId) {
+      for (final s in shots) {
+        if (s.slotId == slotId) return s;
+      }
+      return null;
+    }
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Icon(Icons.palette_outlined, size: 16, color: context.p.primary),
+              const SizedBox(width: 6),
+              Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+            ]),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                if (slots.isNotEmpty)
+                  for (final s in slots)
+                    _SlotTile(
+                      label: s['label'] as String,
+                      required: s['required'] == true,
+                      guide: s['guide'] as String?,
+                      shot: shotFor(s['id'] as String),
+                      onTap: () => onAdd(slotId: s['id'] as String),
+                      onRemove: () {
+                        final sh = shotFor(s['id'] as String);
+                        if (sh != null) onRemove(sh);
+                      },
+                    ),
+                for (final e in extras)
+                  _SlotTile(
+                    label: slots.isNotEmpty ? 'Extra' : '',
+                    required: false,
+                    guide: null,
+                    shot: e,
+                    onTap: () {},
+                    onRemove: () => onRemove(e),
+                  ),
+                if (slots.isNotEmpty || extras.length < 8)
+                  _AddTile(label: slots.isNotEmpty ? 'Extra' : 'Add', onTap: () => onAdd()),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SlotTile extends StatelessWidget {
+  const _SlotTile({
+    required this.label,
+    required this.required,
+    required this.guide,
+    required this.shot,
+    required this.onTap,
+    required this.onRemove,
+  });
+  final String label;
+  final bool required;
+  final String? guide;
+  final _Shot? shot;
+  final VoidCallback onTap;
+  final VoidCallback onRemove;
+
+  static const double _size = 108;
+
+  void _previewGuide(BuildContext context) {
+    if (guide == null || guide!.isEmpty) return;
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        insetPadding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 8, 8),
+              child: Row(children: [
+                Expanded(
+                  child: Text(label.isEmpty ? 'Reference' : label,
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                ),
+                IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+              ]),
+            ),
+            Flexible(
+              child: InteractiveViewer(
+                child: Image.memory(base64Decode(guide!), fit: BoxFit.contain),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text('Frame your photo to match this reference.',
+                  style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filled = shot != null;
+    final hasGuide = guide != null && guide!.isNotEmpty;
+    return SizedBox(
+      width: _size,
+      child: Column(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              InkWell(
+                onTap: filled ? null : onTap,
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  height: _size,
+                  width: _size,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: required && !filled ? context.p.primary : context.p.border,
+                      width: required && !filled ? 1.5 : 1,
+                    ),
+                    color: context.p.surface1,
+                  ),
+                  child: filled
+                      ? Image.memory(base64Decode(shot!.data),
+                          fit: BoxFit.cover, cacheWidth: 260, cacheHeight: 260)
+                      : (hasGuide
+                          // Empty slot with a reference: show the guide clearly so
+                          // staff know the exact framing, with a capture hint.
+                          ? Stack(fit: StackFit.expand, children: [
+                              Image.memory(base64Decode(guide!), fit: BoxFit.cover, cacheWidth: 260, cacheHeight: 260),
+                              Positioned(
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                child: Container(
+                                  color: Colors.black.withValues(alpha: 0.55),
+                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                  child: const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.photo_camera, size: 14, color: Colors.white),
+                                      SizedBox(width: 4),
+                                      Text('Tap to shoot', style: TextStyle(fontSize: 10.5, color: Colors.white)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ])
+                          : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                              Icon(Icons.add_a_photo_outlined, color: context.p.primary),
+                              const SizedBox(height: 2),
+                              Text('Add', style: TextStyle(fontSize: 11, color: context.p.textSecondary)),
+                            ])),
+                ),
+              ),
+              // Enlarge the reference for exact framing.
+              if (hasGuide && !filled)
+                Positioned(
+                  top: 4,
+                  left: 4,
+                  child: GestureDetector(
+                    onTap: () => _previewGuide(context),
+                    child: CircleAvatar(
+                      radius: 12,
+                      backgroundColor: Colors.black.withValues(alpha: 0.55),
+                      child: const Icon(Icons.zoom_in, size: 15, color: Colors.white),
+                    ),
+                  ),
+                ),
+              if (filled)
+                Positioned(
+                  top: -8,
+                  right: -8,
+                  child: IconButton(
+                    icon: CircleAvatar(
+                      radius: 11,
+                      backgroundColor: context.p.danger,
+                      child: const Icon(Icons.close, size: 14, color: Colors.white),
+                    ),
+                    onPressed: onRemove,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          SizedBox(
+            height: 28,
+            child: Text(
+              label.isEmpty ? '' : (label + (required ? ' *' : '')),
+              style: TextStyle(fontSize: 11, color: required ? context.p.primary : context.p.textSecondary),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AddTile extends StatelessWidget {
+  const _AddTile({required this.label, required this.onTap});
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 96,
+      child: Column(
+        children: [
+          InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              height: 96,
+              width: 96,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: context.p.border),
+                color: context.p.surface1,
+              ),
+              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Icon(Icons.add, color: context.p.primary),
+                const SizedBox(height: 2),
+                Text(label, style: TextStyle(fontSize: 11, color: context.p.textSecondary)),
+              ]),
+            ),
+          ),
+          const SizedBox(height: 4),
+          const SizedBox(height: 28),
+        ],
+      ),
+    );
+  }
 }

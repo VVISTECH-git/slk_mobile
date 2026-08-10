@@ -87,6 +87,7 @@ class ProductDetailScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 16),
+              _PhotoGallery(groups: ((p['photoGroups'] as List?) ?? const [])),
               Text('Variants (${variants.length})',
                   style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
               const SizedBox(height: 8),
@@ -146,26 +147,6 @@ class _VariantCard extends StatelessWidget {
               ],
             ),
             Text(v['sku'] as String, style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
-            if ((v['images'] as List?)?.isNotEmpty ?? false) ...[
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 72,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    for (final img in (v['images'] as List))
-                      Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.memory(base64Decode(img as String),
-                              height: 72, width: 72, fit: BoxFit.cover, cacheWidth: 200, cacheHeight: 200),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
             const SizedBox(height: 8),
             Wrap(
               spacing: 14,
@@ -207,6 +188,62 @@ class _VariantCard extends StatelessWidget {
         Text(label, style: TextStyle(fontSize: 11, color: context.p.textSecondary)),
         Text(value == null ? '—' : money0(value),
             style: TextStyle(fontWeight: FontWeight.w700, color: context.p.primaryDark)),
+      ],
+    );
+  }
+}
+
+// Product photos grouped by colour (shared across sizes). One thumbnail strip
+// per colour that has photos.
+class _PhotoGallery extends StatelessWidget {
+  const _PhotoGallery({required this.groups});
+  final List groups;
+
+  @override
+  Widget build(BuildContext context) {
+    final withPhotos = groups
+        .map((g) => (g as Map).cast<String, dynamic>())
+        .where((g) => ((g['images'] as List?) ?? const []).isNotEmpty)
+        .toList();
+    if (withPhotos.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Photos', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+        const SizedBox(height: 8),
+        for (final g in withPhotos) ...[
+          if (((g['color'] ?? '') as String).trim().isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text('${g['color']}',
+                  style: TextStyle(fontSize: 12, color: context.p.textSecondary, fontWeight: FontWeight.w600)),
+            ),
+          SizedBox(
+            height: 84,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                for (final im in (g['images'] as List))
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.memory(
+                        base64Decode(((im as Map)['data'] ?? '') as String),
+                        height: 84,
+                        width: 84,
+                        fit: BoxFit.cover,
+                        cacheWidth: 220,
+                        cacheHeight: 220,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
       ],
     );
   }
