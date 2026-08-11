@@ -15,6 +15,9 @@ import 'features/stock/stock_screen.dart';
 import 'features/stock/movements_screen.dart';
 import 'features/pieces/scan_identify_screen.dart';
 import 'features/pieces/goods_in_screen.dart';
+import 'features/pieces/dispatch_pieces_screen.dart';
+import 'features/pieces/receive_pieces_screen.dart';
+import 'features/pieces/scan_sale_screen.dart';
 import 'features/transfers/transfers_screen.dart';
 import 'features/transfers/new_transfer_screen.dart';
 import 'features/transfers/transfer_detail_screen.dart';
@@ -93,6 +96,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Serialized pieces (unique QR per unit)
       GoRoute(path: '/scan', builder: (_, _) => const ScanIdentifyScreen()),
       GoRoute(path: '/goods-in', builder: (_, _) => const GoodsInScreen()),
+      GoRoute(path: '/pieces/dispatch', builder: (_, _) => const DispatchPiecesScreen()),
+      GoRoute(path: '/pieces/sell', builder: (_, _) => const ScanSaleScreen()),
+      GoRoute(
+        path: '/pieces/receive/:orderId',
+        builder: (_, state) => ReceivePiecesScreen(orderId: state.pathParameters['orderId']!),
+      ),
 
       // Transfers ( /new before /:id so the static path wins )
       GoRoute(path: '/transfers', builder: (_, _) => const TransfersScreen()),

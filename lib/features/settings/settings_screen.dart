@@ -6,6 +6,7 @@ import '../../widgets/theme_button.dart';
 import '../../theme/theme_controller.dart';
 import '../../widgets/async_view.dart';
 import '../production/production_providers.dart';
+import '../pieces/piece_providers.dart';
 import 'business_edit_screen.dart';
 import 'photo_guide_screen.dart';
 import 'settings_providers.dart';
@@ -177,6 +178,10 @@ class SettingsScreen extends ConsumerWidget {
               _AttrGroup(title: 'Techniques', kind: 'technique', rows: (d['techniques'] as List?) ?? [], onChanged: () => ref.invalidate(settingsProvider)),
               _AttrGroup(title: 'Dye types', kind: 'dye', rows: (d['dyeTypes'] as List?) ?? [], onChanged: () => ref.invalidate(settingsProvider)),
               _AttrGroup(title: 'Border styles', kind: 'border', rows: (d['borderStyles'] as List?) ?? [], onChanged: () => ref.invalidate(settingsProvider)),
+              const SizedBox(height: 20),
+
+              // ---- Serialized stock ----
+              const _SerializeStockTile(),
               const SizedBox(height: 20),
 
               // ---- Production config ----
@@ -560,6 +565,58 @@ class _AttrGroup extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// One-time: serialize existing quantity stock into individually-tagged pieces.
+class _SerializeStockTile extends ConsumerStatefulWidget {
+  const _SerializeStockTile();
+  @override
+  ConsumerState<_SerializeStockTile> createState() => _SerializeStockTileState();
+}
+
+class _SerializeStockTileState extends ConsumerState<_SerializeStockTile> {
+  bool _busy = false;
+
+  Future<void> _run() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Serialize existing stock?'),
+        content: const Text(
+            'Creates one tagged piece for every unit currently on hand that isn\'t tagged yet. '
+            'On-hand quantities do not change. Safe to run more than once.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Serialize')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    setState(() => _busy = true);
+    try {
+      final created = await ref.read(pieceRepositoryProvider).backfill();
+      if (mounted) showOk(context, 'Serialized $created existing pieces.');
+    } catch (e) {
+      if (mounted) showError(context, e);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        leading: Icon(Icons.qr_code_2, color: context.p.primary),
+        title: const Text('Serialize existing stock'),
+        subtitle: const Text('Tag every on-hand unit (one-time)', style: TextStyle(fontSize: 12)),
+        trailing: _busy
+            ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
+            : const Icon(Icons.chevron_right),
+        onTap: _busy ? null : _run,
+      ),
     );
   }
 }

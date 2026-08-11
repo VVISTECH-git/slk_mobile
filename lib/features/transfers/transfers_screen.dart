@@ -19,6 +19,14 @@ class TransfersScreen extends ConsumerWidget {
         title: const Text('Transfers'),
         actions: [
           const ThemeButton(),
+          IconButton(
+            tooltip: 'Scan dispatch',
+            onPressed: () async {
+              await context.push('/pieces/dispatch');
+              ref.invalidate(transfersProvider);
+            },
+            icon: const Icon(Icons.qr_code_scanner),
+          ),
           IconButton(onPressed: () => ref.invalidate(transfersProvider), icon: const Icon(Icons.refresh)),
         ],
       ),

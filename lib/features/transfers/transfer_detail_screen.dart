@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../models/transfer.dart';
 import '../../theme/app_theme.dart';
@@ -146,22 +147,41 @@ class _TransferDetailScreenState extends ConsumerState<TransferDetailScreen> {
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Row(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _busy ? null : () => _cancel(t),
-                      child: const Text('Cancel'),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _busy
+                          ? null
+                          : () async {
+                              await context.push('/pieces/receive/${t.id}');
+                              ref.invalidate(transferDetailProvider(widget.transferId));
+                            },
+                      icon: const Icon(Icons.qr_code_scanner),
+                      label: const Text('Scan to receive'),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 2,
-                    child: FilledButton.icon(
-                      onPressed: _busy ? null : () => _receive(t),
-                      icon: const Icon(Icons.check),
-                      label: Text(_busy ? 'Working…' : 'Confirm receipt'),
-                    ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _busy ? null : () => _cancel(t),
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: FilledButton.tonalIcon(
+                          onPressed: _busy ? null : () => _receive(t),
+                          icon: const Icon(Icons.check),
+                          label: Text(_busy ? 'Working…' : 'Confirm (counts)'),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

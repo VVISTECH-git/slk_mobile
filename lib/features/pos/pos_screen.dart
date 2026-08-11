@@ -57,6 +57,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         actions: [
           const ThemeButton(),
           IconButton(
+            tooltip: 'Scan sale',
+            onPressed: () => context.push('/pieces/sell'),
+            icon: const Icon(Icons.qr_code_scanner),
+          ),
+          IconButton(
             tooltip: 'Refresh',
             onPressed: () => ref.invalidate(sellableProvider),
             icon: const Icon(Icons.refresh),
