@@ -15,18 +15,20 @@ class _Module {
   final bool ownerOnly;
 }
 
+// Phase 1: focus on Products only. The rest are parked (hidden from Home, not
+// deleted) — uncomment to bring a module back.
 const _modules = [
-  _Module('Point of Sale', Icons.point_of_sale, '/pos'),
-  _Module('Dashboard', Icons.dashboard_outlined, '/dashboard'),
   _Module('Products', Icons.inventory_2_outlined, '/products'),
-  _Module('Stock', Icons.warehouse_outlined, '/stock'),
-  _Module('Identify item', Icons.qr_code_scanner, '/scan'),
-  _Module('Goods-in · label', Icons.qr_code_2, '/goods-in', ownerOnly: true),
-  _Module('Transfers', Icons.local_shipping_outlined, '/transfers'),
-  _Module('Production', Icons.precision_manufacturing_outlined, '/production'),
-  _Module('Invoices', Icons.receipt_long_outlined, '/invoices'),
-  _Module('Daily report', Icons.summarize_outlined, '/reports'),
-  _Module('Settings', Icons.settings_outlined, '/settings', ownerOnly: true),
+  // _Module('Point of Sale', Icons.point_of_sale, '/pos'),
+  // _Module('Dashboard', Icons.dashboard_outlined, '/dashboard'),
+  // _Module('Stock', Icons.warehouse_outlined, '/stock'),
+  // _Module('Identify item', Icons.qr_code_scanner, '/scan'),
+  // _Module('Goods-in · label', Icons.qr_code_2, '/goods-in', ownerOnly: true),
+  // _Module('Transfers', Icons.local_shipping_outlined, '/transfers'),
+  // _Module('Production', Icons.precision_manufacturing_outlined, '/production'),
+  // _Module('Invoices', Icons.receipt_long_outlined, '/invoices'),
+  // _Module('Daily report', Icons.summarize_outlined, '/reports'),
+  // _Module('Settings', Icons.settings_outlined, '/settings', ownerOnly: true),
 ];
 
 /// Pieces currently out at vendors — shown as a badge on the Production tile.
