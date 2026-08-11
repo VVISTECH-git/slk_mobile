@@ -53,9 +53,10 @@ class NamedLocation {
 
 /// The Products list payload: rows + the location columns.
 class ProductsList {
-  const ProductsList({required this.rows, required this.locations});
+  const ProductsList({required this.rows, required this.locations, this.total = 0});
   final List<ProductListRow> rows;
   final List<NamedLocation> locations;
+  final int total; // total matching products (for pagination)
 
   factory ProductsList.fromJson(Map<String, dynamic> j) => ProductsList(
         rows: ((j['rows'] as List?) ?? [])
@@ -64,5 +65,6 @@ class ProductsList {
         locations: ((j['locations'] as List?) ?? [])
             .map((e) => NamedLocation.fromJson((e as Map).cast<String, dynamic>()))
             .toList(),
+        total: (j['total'] as num?)?.toInt() ?? 0,
       );
 }

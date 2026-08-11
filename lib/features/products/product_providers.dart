@@ -32,6 +32,16 @@ class ProductRepository {
   ProductRepository(this.ref);
   final Ref ref;
 
+  /// A page of products, optionally filtered by search (name / code / SKU).
+  Future<ProductsList> page({String? search, int limit = 30, int offset = 0}) async {
+    final data = await ref.read(apiClientProvider).get('/products', query: {
+      'limit': limit,
+      'offset': offset,
+      if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+    });
+    return ProductsList.fromJson((data as Map).cast<String, dynamic>());
+  }
+
   /// Create a product. Returns the new product's id.
   Future<String> create(Map<String, dynamic> input) async {
     final data = await ref.read(apiClientProvider).post('/products', body: input);

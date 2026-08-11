@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,7 +8,6 @@ import '../../core/format.dart';
 import '../../models/product.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/theme_button.dart';
-import '../../widgets/async_view.dart';
 import 'product_providers.dart';
 
 class ProductsScreen extends ConsumerStatefulWidget {
@@ -17,28 +18,87 @@ class ProductsScreen extends ConsumerStatefulWidget {
 }
 
 class _ProductsScreenState extends ConsumerState<ProductsScreen> {
-  String _query = '';
+  static const _pageSize = 30;
+  final _scroll = ScrollController();
+  final _search = TextEditingController();
+  Timer? _debounce;
+
+  final List<ProductListRow> _rows = [];
+  int _total = 0;
+  bool _loading = false;
+  bool _hasMore = true;
+  Object? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(_onScroll);
+    _reset();
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _scroll.dispose();
+    _search.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 400) _loadMore();
+  }
+
+  Future<void> _reset() async {
+    setState(() {
+      _rows.clear();
+      _total = 0;
+      _hasMore = true;
+      _error = null;
+    });
+    await _loadMore();
+  }
+
+  Future<void> _loadMore() async {
+    if (_loading || !_hasMore) return;
+    setState(() => _loading = true);
+    try {
+      final res = await ref.read(productRepositoryProvider).page(
+            search: _search.text,
+            limit: _pageSize,
+            offset: _rows.length,
+          );
+      setState(() {
+        _rows.addAll(res.rows);
+        _total = res.total;
+        _hasMore = _rows.length < res.total && res.rows.isNotEmpty;
+        _error = null;
+      });
+    } catch (e) {
+      setState(() => _error = e);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _onSearchChanged(String _) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), _reset);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final products = ref.watch(productsProvider);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Products'),
         actions: [
           const ThemeButton(),
-          IconButton(
-            tooltip: 'Refresh',
-            onPressed: () => ref.invalidate(productsProvider),
-            icon: const Icon(Icons.refresh),
-          ),
+          IconButton(tooltip: 'Refresh', onPressed: _reset, icon: const Icon(Icons.refresh)),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           await context.push('/products/new');
-          ref.invalidate(productsProvider);
+          _reset();
         },
         backgroundColor: context.p.primary,
         foregroundColor: Colors.white,
@@ -48,44 +108,68 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
             child: TextField(
-              decoration: const InputDecoration(
-                hintText: 'Search products',
-                prefixIcon: Icon(Icons.search),
+              controller: _search,
+              decoration: InputDecoration(
+                hintText: 'Search name, code or SKU',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _search.text.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _search.clear();
+                          _reset();
+                        },
+                      ),
               ),
-              onChanged: (v) => setState(() => _query = v),
+              onChanged: _onSearchChanged,
             ),
           ),
-          Expanded(
-            child: AsyncView<ProductsList>(
-              value: products,
-              onRetry: () => ref.invalidate(productsProvider),
-              isEmpty: (d) => d.rows.isEmpty,
-              emptyMessage: 'No products yet.',
-              data: (list) {
-                final q = _query.trim().toLowerCase();
-                final rows = q.isEmpty
-                    ? list.rows
-                    : list.rows
-                        .where((r) =>
-                            r.name.toLowerCase().contains(q) ||
-                            r.productCode.toLowerCase().contains(q) ||
-                            r.categoryPath.toLowerCase().contains(q))
-                        .toList();
-                if (rows.isEmpty) {
-                  return const Center(child: Text('No products match your search.'));
-                }
-                return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
-                  itemCount: rows.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (_, i) => _ProductCard(row: rows[i]),
-                );
-              },
+          if (_total > 0 || _rows.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text('${_rows.length} of $_total',
+                    style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
+              ),
             ),
-          ),
+          Expanded(child: _body(context)),
         ],
+      ),
+    );
+  }
+
+  Widget _body(BuildContext context) {
+    if (_error != null && _rows.isEmpty) {
+      return Center(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text('$_error', style: TextStyle(color: context.p.danger)),
+          const SizedBox(height: 12),
+          FilledButton.tonal(onPressed: _reset, child: const Text('Try again')),
+        ]),
+      );
+    }
+    if (_rows.isEmpty && _loading) return const Center(child: CircularProgressIndicator());
+    if (_rows.isEmpty) return const Center(child: Text('No products match your search.'));
+    return RefreshIndicator(
+      onRefresh: _reset,
+      child: ListView.separated(
+        controller: _scroll,
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
+        itemCount: _rows.length + (_hasMore ? 1 : 0),
+        separatorBuilder: (_, _) => const SizedBox(height: 8),
+        itemBuilder: (_, i) {
+          if (i >= _rows.length) {
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          return _ProductCard(row: _rows[i]);
+        },
       ),
     );
   }
