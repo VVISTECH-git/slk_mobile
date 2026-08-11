@@ -18,14 +18,33 @@ class TransferDetailScreen extends ConsumerStatefulWidget {
 
 class _TransferDetailScreenState extends ConsumerState<TransferDetailScreen> {
   final Map<String, int> _received = {}; // itemId → received qty (defaults to dispatched)
+  final Map<String, String> _reason = {}; // itemId → discrepancy reason (short receipts)
+  final Map<String, String> _note = {}; // itemId → optional note
   bool _busy = false;
 
+  static const _reasons = ['damaged', 'lost', 'miscount', 'other'];
+
   Future<void> _receive(TransferDetail t) async {
+    // Every short line must have a reason (backend enforces this too).
+    for (final it in t.items) {
+      final recv = _received[it.id] ?? it.quantityDispatched;
+      if (recv < it.quantityDispatched && (_reason[it.id] ?? '').isEmpty) {
+        showError(context, 'Pick a reason for the short quantity on ${it.productName}.');
+        return;
+      }
+    }
     setState(() => _busy = true);
     try {
-      final list = t.items
-          .map((it) => (itemId: it.id, quantity: _received[it.id] ?? it.quantityDispatched))
-          .toList();
+      final list = t.items.map((it) {
+        final recv = _received[it.id] ?? it.quantityDispatched;
+        final short = recv < it.quantityDispatched;
+        return (
+          itemId: it.id,
+          quantity: recv,
+          reason: short ? _reason[it.id] : null,
+          note: short ? _note[it.id] : null,
+        );
+      }).toList();
       await ref.read(transferRepositoryProvider).receive(t.id, list);
       ref.invalidate(transferDetailProvider(widget.transferId));
       if (!mounted) return;
@@ -154,51 +173,93 @@ class _TransferDetailScreenState extends ConsumerState<TransferDetailScreen> {
 
   Widget _itemRow(TransferItem it, {required bool editable}) {
     final recv = _received[it.id] ?? it.quantityDispatched;
+    final short = recv < it.quantityDispatched;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(it.productName, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  Text('${it.sku}${it.variantLabel != null && it.variantLabel != '—' ? ' · ${it.variantLabel}' : ''}',
-                      style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
-                  Text('Dispatched: ${it.quantityDispatched}',
-                      style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
-                ],
-              ),
-            ),
-            if (editable)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    onPressed: recv > 0 ? () => setState(() => _received[it.id] = recv - 1) : null,
-                    icon: const Icon(Icons.remove_circle_outline),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(it.productName, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      Text('${it.sku}${it.variantLabel != null && it.variantLabel != '—' ? ' · ${it.variantLabel}' : ''}',
+                          style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
+                      Text('Dispatched: ${it.quantityDispatched}',
+                          style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
+                    ],
                   ),
-                  Text('$recv', style: const TextStyle(fontWeight: FontWeight.w700)),
-                  IconButton(
-                    onPressed: recv < it.quantityDispatched
-                        ? () => setState(() => _received[it.id] = recv + 1)
-                        : null,
-                    icon: const Icon(Icons.add_circle_outline),
-                  ),
-                ],
-              )
-            else
-              Text(
-                it.quantityReceived != null ? 'Recv: ${it.quantityReceived}' : '—',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: it.quantityReceived != null && it.quantityReceived! < it.quantityDispatched
-                      ? context.p.danger
-                      : context.p.text,
                 ),
+                if (editable)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        onPressed: recv > 0 ? () => setState(() => _received[it.id] = recv - 1) : null,
+                        icon: const Icon(Icons.remove_circle_outline),
+                      ),
+                      Text('$recv', style: const TextStyle(fontWeight: FontWeight.w700)),
+                      IconButton(
+                        onPressed: recv < it.quantityDispatched
+                            ? () => setState(() => _received[it.id] = recv + 1)
+                            : null,
+                        icon: const Icon(Icons.add_circle_outline),
+                      ),
+                    ],
+                  )
+                else ...[
+                  Text(
+                    it.quantityReceived != null ? 'Recv: ${it.quantityReceived}' : '—',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: it.quantityReceived != null && it.quantityReceived! < it.quantityDispatched
+                          ? context.p.danger
+                          : context.p.text,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            // Received short — capture why (editable) or show why (received).
+            if (editable && short) ...[
+              const SizedBox(height: 8),
+              Row(children: [
+                Icon(Icons.warning_amber_rounded, size: 16, color: context.p.danger),
+                const SizedBox(width: 6),
+                Text('Short by ${it.quantityDispatched - recv} — reason required',
+                    style: TextStyle(fontSize: 12, color: context.p.danger, fontWeight: FontWeight.w600)),
+              ]),
+              const SizedBox(height: 6),
+              DropdownButtonFormField<String>(
+                initialValue: (_reason[it.id] ?? '').isEmpty ? null : _reason[it.id],
+                isDense: true,
+                decoration: const InputDecoration(labelText: 'Reason', border: OutlineInputBorder()),
+                items: [
+                  for (final r in _reasons)
+                    DropdownMenuItem(value: r, child: Text(r[0].toUpperCase() + r.substring(1))),
+                ],
+                onChanged: (v) => setState(() => _reason[it.id] = v ?? ''),
               ),
+              const SizedBox(height: 8),
+              TextField(
+                decoration: const InputDecoration(labelText: 'Note (optional)', border: OutlineInputBorder(), isDense: true),
+                onChanged: (v) => _note[it.id] = v,
+              ),
+            ] else if (!editable &&
+                it.quantityReceived != null &&
+                it.quantityReceived! < it.quantityDispatched &&
+                (it.discrepancyReason ?? '').isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                'Short: ${it.discrepancyReason}${(it.discrepancyNote ?? '').isNotEmpty ? ' · ${it.discrepancyNote}' : ''}',
+                style: TextStyle(fontSize: 12, color: context.p.danger),
+              ),
+            ],
           ],
         ),
       ),

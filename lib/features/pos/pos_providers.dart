@@ -54,6 +54,9 @@ class CartController extends Notifier<List<CartLine>> {
 
 final cartProvider = NotifierProvider<CartController, List<CartLine>>(CartController.new);
 
+/// Sales channel for the current sale: false = retail, true = wholesale (B2B).
+final wholesaleProvider = StateProvider<bool>((ref) => false);
+
 /// Result of completing a sale.
 class SaleResult {
   const SaleResult({required this.invoiceId, required this.invoiceNumber});
@@ -74,6 +77,7 @@ class PosRepository {
     double discount = 0,
     Map<String, String?>? customer,
     String? note,
+    String channel = 'retail',
   }) async {
     final api = ref.read(apiClientProvider);
     final data = await api.post('/pos/invoices', body: {
@@ -82,6 +86,7 @@ class PosRepository {
       ],
       'paymentMode': paymentMode,
       'discount': discount,
+      'channel': channel,
       if (customer != null) 'customer': customer,
       if (note != null && note.isNotEmpty) 'note': note,
     });

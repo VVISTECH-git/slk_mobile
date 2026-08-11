@@ -6,6 +6,7 @@ class SellableVariant {
     required this.productName,
     required this.variantLabel,
     required this.price,
+    required this.wholesalePrice,
     required this.gstRate,
     required this.hsnCode,
     required this.stock,
@@ -15,10 +16,13 @@ class SellableVariant {
   final String sku;
   final String productName;
   final String variantLabel;
-  final double price; // MRP (GST-inclusive)
+  final double price; // retail MRP (GST-inclusive)
+  final double wholesalePrice; // B2B price (falls back to retail)
   final double gstRate;
   final String? hsnCode;
   final int stock;
+
+  double priceFor(bool wholesale) => wholesale ? wholesalePrice : price;
 
   factory SellableVariant.fromJson(Map<String, dynamic> j) => SellableVariant(
         id: j['id'] as String,
@@ -26,6 +30,7 @@ class SellableVariant {
         productName: (j['productName'] ?? '—') as String,
         variantLabel: (j['variantLabel'] ?? '—') as String,
         price: (j['price'] as num?)?.toDouble() ?? 0,
+        wholesalePrice: (j['wholesalePrice'] as num?)?.toDouble() ?? (j['price'] as num?)?.toDouble() ?? 0,
         gstRate: (j['gstRate'] as num?)?.toDouble() ?? 0,
         hsnCode: j['hsnCode'] as String?,
         stock: (j['stock'] as num?)?.toInt() ?? 0,
@@ -38,7 +43,8 @@ class CartLine {
   final SellableVariant variant;
   final int quantity;
 
-  double get gross => variant.price * quantity;
+  double get gross => variant.price * quantity; // retail default
+  double grossFor(bool wholesale) => variant.priceFor(wholesale) * quantity;
 
   CartLine copyWith({int? quantity}) =>
       CartLine(variant: variant, quantity: quantity ?? this.quantity);

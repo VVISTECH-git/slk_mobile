@@ -170,8 +170,12 @@ class _InvoiceBody extends StatelessWidget {
                   const Divider(height: 18),
                 ],
                 _row('Taxable value', money(inv.taxableValue)),
-                _row('CGST', money(inv.cgst)),
-                _row('SGST', money(inv.sgst)),
+                if (inv.isInterState)
+                  _row('IGST', money(inv.igst))
+                else ...[
+                  _row('CGST', money(inv.cgst)),
+                  _row('SGST', money(inv.sgst)),
+                ],
                 if (inv.discount > 0) _row('Discount', '− ${money(inv.discount)}'),
                 const SizedBox(height: 6),
                 _row('Total (incl. GST)', money(inv.total), bold: true),

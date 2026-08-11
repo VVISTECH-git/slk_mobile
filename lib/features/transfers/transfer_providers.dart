@@ -57,9 +57,20 @@ class TransferRepository {
     return (data as Map)['id'] as String;
   }
 
-  Future<void> receive(String id, List<({String itemId, int quantity})> received) async {
+  Future<void> receive(
+    String id,
+    List<({String itemId, int quantity, String? reason, String? note})> received,
+  ) async {
     await ref.read(apiClientProvider).post('/transfers/$id/receive', body: {
-      'received': [for (final r in received) {'itemId': r.itemId, 'quantity': r.quantity}],
+      'received': [
+        for (final r in received)
+          {
+            'itemId': r.itemId,
+            'quantity': r.quantity,
+            if (r.reason != null) 'reason': r.reason,
+            if (r.note != null && r.note!.isNotEmpty) 'note': r.note,
+          }
+      ],
     });
   }
 

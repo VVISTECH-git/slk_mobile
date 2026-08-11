@@ -102,7 +102,7 @@ Future<List<int>> buildInvoicePdf(InvoiceFull inv, Map<String, dynamic> business
                         '${it.quantity}',
                         _amt(it.unitPrice),
                         _amt(it.taxableValue),
-                        '${_amt(it.cgst + it.sgst)}\n@${it.gstRate.toStringAsFixed(0)}%',
+                        '${_amt(it.cgst + it.sgst + it.igst)}\n@${it.gstRate.toStringAsFixed(0)}%',
                         _amt(it.lineTotal),
                       ])
                   .toList(),
@@ -117,8 +117,12 @@ Future<List<int>> buildInvoicePdf(InvoiceFull inv, Map<String, dynamic> business
                 child: pw.Column(
                   children: [
                     _totRow('Taxable value', _amt(inv.taxableValue)),
-                    _totRow('CGST', _amt(inv.cgst)),
-                    _totRow('SGST', _amt(inv.sgst)),
+                    if (inv.isInterState)
+                      _totRow('IGST', _amt(inv.igst))
+                    else ...[
+                      _totRow('CGST', _amt(inv.cgst)),
+                      _totRow('SGST', _amt(inv.sgst)),
+                    ],
                     if (inv.discount > 0) _totRow('Discount', '- ${_amt(inv.discount)}'),
                     pw.Divider(),
                     _totRow('Grand Total', '₹ ${_amt(inv.total)}', bold: true),

@@ -43,12 +43,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       showError(context, 'The cart is empty.');
       return;
     }
+    final wholesale = ref.read(wholesaleProvider);
     setState(() => _busy = true);
     try {
       final result = await ref.read(posRepositoryProvider).createInvoice(
             cart: cart,
             paymentMode: _payment,
             discount: _discountValue,
+            channel: wholesale ? 'wholesale' : 'retail',
             customer: _showCustomer
                 ? {
                     'name': _name.text.trim(),
@@ -59,6 +61,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 : null,
           );
       ref.read(cartProvider.notifier).clear();
+      ref.read(wholesaleProvider.notifier).state = false; // reset for next sale
       ref.invalidate(sellableProvider); // stock changed
       if (!mounted) return;
       // Replace so the back button returns to the till, not checkout.
@@ -73,7 +76,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     final cart = ref.watch(cartProvider);
-    final subtotal = cart.fold<double>(0, (s, l) => s + l.gross);
+    final wholesale = ref.watch(wholesaleProvider);
+    final subtotal = cart.fold<double>(0, (s, l) => s + l.grossFor(wholesale));
     final total = (subtotal - _discountValue).clamp(0, double.infinity);
 
     return Scaffold(
@@ -82,6 +86,30 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // ---- Sales channel ----
+          const _SectionLabel('Sale type'),
+          const SizedBox(height: 8),
+          SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(value: false, label: Text('Retail'), icon: Icon(Icons.storefront_outlined)),
+              ButtonSegment(value: true, label: Text('Wholesale'), icon: Icon(Icons.inventory_2_outlined)),
+            ],
+            selected: {wholesale},
+            onSelectionChanged: (s) => setState(() {
+              ref.read(wholesaleProvider.notifier).state = s.first;
+              if (s.first) _showCustomer = true; // GSTIN needed for wholesale GST
+            }),
+          ),
+          if (wholesale)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                'B2B prices applied. Enter the buyer\'s GSTIN — GST auto-switches to IGST for out-of-state buyers.',
+                style: TextStyle(fontSize: 12, color: context.p.textSecondary, height: 1.3),
+              ),
+            ),
+          const SizedBox(height: 16),
+
           // ---- Cart lines ----
           Card(
             child: Padding(
@@ -99,12 +127,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                               children: [
                                 Text(l.variant.productName,
                                     style: const TextStyle(fontWeight: FontWeight.w600)),
-                                Text('${l.variant.sku} · ${money(l.variant.price)} × ${l.quantity}',
+                                Text('${l.variant.sku} · ${money(l.variant.priceFor(wholesale))} × ${l.quantity}',
                                     style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
                               ],
                             ),
                           ),
-                          Text(money(l.gross), style: const TextStyle(fontWeight: FontWeight.w700)),
+                          Text(money(l.grossFor(wholesale)), style: const TextStyle(fontWeight: FontWeight.w700)),
                         ],
                       ),
                     ),

@@ -11,6 +11,7 @@ class InvoiceItem {
     required this.taxableValue,
     required this.cgst,
     required this.sgst,
+    required this.igst,
     required this.lineTotal,
   });
 
@@ -24,6 +25,7 @@ class InvoiceItem {
   final double taxableValue;
   final double cgst;
   final double sgst;
+  final double igst;
   final double lineTotal;
 
   factory InvoiceItem.fromJson(Map<String, dynamic> j) => InvoiceItem(
@@ -37,6 +39,7 @@ class InvoiceItem {
         taxableValue: (j['taxableValue'] as num?)?.toDouble() ?? 0,
         cgst: (j['cgst'] as num?)?.toDouble() ?? 0,
         sgst: (j['sgst'] as num?)?.toDouble() ?? 0,
+        igst: (j['igst'] as num?)?.toDouble() ?? 0,
         lineTotal: (j['lineTotal'] as num?)?.toDouble() ?? 0,
       );
 }
@@ -73,10 +76,12 @@ class InvoiceFull {
     required this.taxableValue,
     required this.cgst,
     required this.sgst,
+    required this.igst,
     required this.taxTotal,
     required this.discount,
     required this.total,
     required this.paymentMode,
+    required this.channel,
   });
 
   final String id;
@@ -89,10 +94,15 @@ class InvoiceFull {
   final double taxableValue;
   final double cgst;
   final double sgst;
+  final double igst;
   final double taxTotal;
   final double discount;
   final double total;
   final String paymentMode;
+  final String channel; // retail | wholesale
+
+  bool get isWholesale => channel == 'wholesale';
+  bool get isInterState => igst > 0;
 
   factory InvoiceFull.fromJson(Map<String, dynamic> j) => InvoiceFull(
         id: j['id'] as String,
@@ -107,10 +117,12 @@ class InvoiceFull {
         taxableValue: (j['taxableValue'] as num?)?.toDouble() ?? 0,
         cgst: (j['cgst'] as num?)?.toDouble() ?? 0,
         sgst: (j['sgst'] as num?)?.toDouble() ?? 0,
+        igst: (j['igst'] as num?)?.toDouble() ?? 0,
         taxTotal: (j['taxTotal'] as num?)?.toDouble() ?? 0,
         discount: (j['discount'] as num?)?.toDouble() ?? 0,
         total: (j['total'] as num?)?.toDouble() ?? 0,
         paymentMode: (j['paymentMode'] ?? '') as String,
+        channel: (j['channel'] ?? 'retail') as String,
       );
 }
 

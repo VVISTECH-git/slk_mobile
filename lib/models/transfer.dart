@@ -68,6 +68,8 @@ class TransferItem {
     required this.variantLabel,
     required this.quantityDispatched,
     required this.quantityReceived,
+    this.discrepancyReason,
+    this.discrepancyNote,
   });
 
   final String id;
@@ -76,6 +78,8 @@ class TransferItem {
   final String? variantLabel;
   final int quantityDispatched;
   final int? quantityReceived;
+  final String? discrepancyReason;
+  final String? discrepancyNote;
 
   factory TransferItem.fromJson(Map<String, dynamic> j) => TransferItem(
         id: j['id'] as String,
@@ -84,6 +88,8 @@ class TransferItem {
         variantLabel: j['variantLabel'] as String?,
         quantityDispatched: (j['quantityDispatched'] as num?)?.toInt() ?? 0,
         quantityReceived: (j['quantityReceived'] as num?)?.toInt(),
+        discrepancyReason: j['discrepancyReason'] as String?,
+        discrepancyNote: j['discrepancyNote'] as String?,
       );
 }
 
