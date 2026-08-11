@@ -20,6 +20,8 @@ const _modules = [
   _Module('Dashboard', Icons.dashboard_outlined, '/dashboard'),
   _Module('Products', Icons.inventory_2_outlined, '/products'),
   _Module('Stock', Icons.warehouse_outlined, '/stock'),
+  _Module('Identify item', Icons.qr_code_scanner, '/scan'),
+  _Module('Goods-in · label', Icons.qr_code_2, '/goods-in', ownerOnly: true),
   _Module('Transfers', Icons.local_shipping_outlined, '/transfers'),
   _Module('Production', Icons.precision_manufacturing_outlined, '/production'),
   _Module('Invoices', Icons.receipt_long_outlined, '/invoices'),
