@@ -18,6 +18,14 @@ final productDetailProvider =
   return (data as Map).cast<String, dynamic>();
 });
 
+/// Individual serialized pieces (each QR) for a product — for the Pieces list.
+final productPiecesProvider =
+    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>((ref, id) async {
+  final api = ref.watch(apiClientProvider);
+  final data = await api.get('/products/$id/pieces');
+  return ((data as List?) ?? []).map((e) => (e as Map).cast<String, dynamic>()).toList();
+});
+
 /// Dropdown data for forms (categories, fabrics, techniques, locations…).
 final lookupsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   final api = ref.watch(apiClientProvider);

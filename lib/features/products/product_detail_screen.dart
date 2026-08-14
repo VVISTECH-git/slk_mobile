@@ -94,6 +94,8 @@ class ProductDetailScreen extends ConsumerWidget {
               const SizedBox(height: 8),
               for (final v in variants)
                 _VariantCard(v: (v as Map).cast<String, dynamic>(), locNames: locNames),
+              const SizedBox(height: 20),
+              _PiecesSection(productId: productId),
             ],
           );
         },
@@ -190,6 +192,87 @@ class _VariantCard extends StatelessWidget {
         Text(value == null ? '—' : money0(value),
             style: TextStyle(fontWeight: FontWeight.w700, color: context.p.primaryDark)),
       ],
+    );
+  }
+}
+
+// Individual serialized pieces (each with its own QR). Each physical unit is
+// listed separately here, even though the catalogue shows an aggregate count.
+class _PiecesSection extends ConsumerWidget {
+  const _PiecesSection({required this.productId});
+  final String productId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(productPiecesProvider(productId));
+    return async.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(8),
+        child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+      ),
+      error: (e, _) => const SizedBox.shrink(),
+      data: (pieces) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Pieces (${pieces.length})',
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+            const SizedBox(height: 8),
+            if (pieces.isEmpty)
+              Text('No individual pieces tagged yet. Use “Receive stock” to tag pieces with QR codes.',
+                  style: TextStyle(fontSize: 13, color: context.p.textSecondary))
+            else
+              for (final raw in pieces) _PieceRow(p: (raw).cast<String, dynamic>()),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _PieceRow extends StatelessWidget {
+  const _PieceRow({required this.p});
+  final Map<String, dynamic> p;
+
+  @override
+  Widget build(BuildContext context) {
+    final status = (p['status'] ?? '') as String;
+    final colour = (p['colour'] ?? '') as String?;
+    final location = (p['location'] ?? '') as String?;
+    final sub = [
+      if ((colour ?? '').isNotEmpty) colour,
+      if ((location ?? '').isNotEmpty) location,
+    ].join(' · ');
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        dense: true,
+        leading: Icon(Icons.qr_code_2, color: context.p.primary),
+        title: Text('${p['tagCode']}', style: const TextStyle(fontWeight: FontWeight.w700)),
+        subtitle: sub.isEmpty ? null : Text(sub, style: const TextStyle(fontSize: 12)),
+        trailing: _PieceStatusChip(status: status),
+      ),
+    );
+  }
+}
+
+class _PieceStatusChip extends StatelessWidget {
+  const _PieceStatusChip({required this.status});
+  final String status;
+  @override
+  Widget build(BuildContext context) {
+    final color = status == 'available'
+        ? context.p.success
+        : status == 'sold'
+            ? context.p.textSecondary
+            : status == 'in_transit'
+                ? context.p.accent
+                : context.p.danger;
+    final label = status.isEmpty ? '—' : status.replaceAll('_', ' ');
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(20)),
+      child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color)),
     );
   }
 }
