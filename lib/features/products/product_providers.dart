@@ -40,9 +40,9 @@ class ProductRepository {
   ProductRepository(this.ref);
   final Ref ref;
 
-  /// A page of products, optionally filtered by search (name / code / SKU).
+  /// A page of the catalogue as one row per COLOUR, filtered by search.
   Future<ProductsList> page({String? search, int limit = 30, int offset = 0}) async {
-    final data = await ref.read(apiClientProvider).get('/products', query: {
+    final data = await ref.read(apiClientProvider).get('/products/colours', query: {
       'limit': limit,
       'offset': offset,
       if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
