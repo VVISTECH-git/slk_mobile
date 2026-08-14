@@ -21,6 +21,14 @@ class _Shot {
 }
 
 // Holds the controllers for one variant row (disposed with the screen).
+// Standard pick-lists (colour lives on the variant/colour-group; size optional).
+const _variantColours = [
+  'Red', 'Maroon', 'Rani Pink', 'Pink', 'Peach', 'Orange', 'Rust', 'Mustard',
+  'Yellow', 'Gold', 'Cream', 'Off White', 'White', 'Beige', 'Brown', 'Coffee',
+  'Green', 'Mehendi', 'Teal', 'Sea Green', 'Blue', 'Sky Blue', 'Navy', 'Indigo', 'Purple',
+];
+const _variantSizes = ['Free', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+
 class _VariantForm {
   String? id; // existing variant id (edit mode) — keeps SKUs stable
   String? sku;
@@ -287,7 +295,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     }
     final filled = _variants.where((v) => v.hasContent).toList();
     if (filled.isEmpty) {
-      showError(context, 'Add at least one variant (colour/size or price).');
+      showError(context, 'Add at least one colour (with its opening stock or price).');
       return;
     }
 
@@ -478,15 +486,15 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Variants
+              // Colours (each colour = a variant; its opening stock = the quantity)
               Row(
                 children: [
-                  _section('Variants'),
+                  _section('Colours'),
                   const Spacer(),
                   TextButton.icon(
                     onPressed: () => setState(() => _variants.add(_VariantForm())),
                     icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Add'),
+                    label: const Text('Add colour'),
                   ),
                 ],
               ),
@@ -632,7 +640,7 @@ class _VariantCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text('Variant ${index + 1}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text('Colour ${index + 1}', style: const TextStyle(fontWeight: FontWeight.w700)),
                 const Spacer(),
                 if (canRemove)
                   IconButton(
@@ -644,14 +652,32 @@ class _VariantCard extends StatelessWidget {
             ),
             Row(children: [
               Expanded(
-                child: TextField(
-                  controller: variant.color,
+                child: DropdownButtonFormField<String>(
+                  key: ValueKey('colour-$index-${variant.color.text}'),
+                  initialValue: _variantColours.contains(variant.color.text.trim()) ? variant.color.text.trim() : null,
+                  isExpanded: true,
                   decoration: const InputDecoration(labelText: 'Colour'),
-                  onChanged: (_) => onChanged(),
+                  items: [for (final c in _variantColours) DropdownMenuItem(value: c, child: Text(c))],
+                  onChanged: (v) {
+                    variant.color.text = v ?? '';
+                    onChanged();
+                  },
                 ),
               ),
               const SizedBox(width: 10),
-              Expanded(child: TextField(controller: variant.size, decoration: const InputDecoration(labelText: 'Size'))),
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  key: ValueKey('size-$index-${variant.size.text}'),
+                  initialValue: _variantSizes.contains(variant.size.text.trim()) ? variant.size.text.trim() : null,
+                  isExpanded: true,
+                  decoration: const InputDecoration(labelText: 'Size'),
+                  items: [for (final s in _variantSizes) DropdownMenuItem(value: s, child: Text(s))],
+                  onChanged: (v) {
+                    variant.size.text = v ?? '';
+                    onChanged();
+                  },
+                ),
+              ),
             ]),
             const SizedBox(height: 10),
             TextField(controller: variant.barcode, decoration: const InputDecoration(labelText: 'Barcode')),
@@ -963,15 +989,15 @@ class _AddTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 96,
+      width: 108,
       child: Column(
         children: [
           InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(10),
             child: Container(
-              height: 96,
-              width: 96,
+              height: 108,
+              width: 108,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: context.p.border),

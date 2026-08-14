@@ -89,7 +89,7 @@ class ProductDetailScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               _PhotoGallery(groups: ((p['photoGroups'] as List?) ?? const [])),
-              Text('Variants (${variants.length})',
+              Text('Colours (${variants.length})',
                   style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
               const SizedBox(height: 8),
               for (final v in variants)
