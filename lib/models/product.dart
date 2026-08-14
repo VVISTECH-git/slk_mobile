@@ -42,6 +42,57 @@ class ProductListRow {
       );
 }
 
+/// One physical piece (one QR tag) in the Products list.
+class PieceListRow {
+  const PieceListRow({
+    required this.tagCode,
+    required this.name,
+    required this.productId,
+    required this.productCode,
+    required this.categoryPath,
+    required this.colour,
+    required this.size,
+    required this.location,
+    required this.status,
+  });
+
+  final String tagCode;
+  final String name;
+  final String productId;
+  final String productCode;
+  final String categoryPath;
+  final String? colour;
+  final String? size;
+  final String? location;
+  final String status; // available | in_transit | sold | missing | scrapped
+
+  factory PieceListRow.fromJson(Map<String, dynamic> j) => PieceListRow(
+        tagCode: (j['tagCode'] ?? '') as String,
+        name: (j['name'] ?? '') as String,
+        productId: (j['productId'] ?? '') as String,
+        productCode: (j['productCode'] ?? '—') as String,
+        categoryPath: (j['categoryPath'] ?? '') as String,
+        colour: j['colour'] as String?,
+        size: j['size'] as String?,
+        location: j['location'] as String?,
+        status: (j['status'] ?? 'available') as String,
+      );
+}
+
+/// The pieces list payload: rows + total for pagination.
+class PiecesList {
+  const PiecesList({required this.rows, this.total = 0});
+  final List<PieceListRow> rows;
+  final int total;
+
+  factory PiecesList.fromJson(Map<String, dynamic> j) => PiecesList(
+        rows: ((j['rows'] as List?) ?? [])
+            .map((e) => PieceListRow.fromJson((e as Map).cast<String, dynamic>()))
+            .toList(),
+        total: (j['total'] as num?)?.toInt() ?? 0,
+      );
+}
+
 /// A named location column in the products/stock lists.
 class NamedLocation {
   const NamedLocation({required this.id, required this.name});

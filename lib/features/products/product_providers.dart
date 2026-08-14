@@ -50,6 +50,16 @@ class ProductRepository {
     return ProductsList.fromJson((data as Map).cast<String, dynamic>());
   }
 
+  /// A page of individual pieces (one row per QR tag), optionally filtered.
+  Future<PiecesList> pagePieces({String? search, int limit = 30, int offset = 0}) async {
+    final data = await ref.read(apiClientProvider).get('/pieces', query: {
+      'limit': limit,
+      'offset': offset,
+      if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+    });
+    return PiecesList.fromJson((data as Map).cast<String, dynamic>());
+  }
+
   /// Create a product. Returns the new product's id.
   Future<String> create(Map<String, dynamic> input) async {
     final data = await ref.read(apiClientProvider).post('/products', body: input);

@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/format.dart';
 import '../../models/product.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/picker_field.dart';
 import '../../widgets/theme_button.dart';
 import 'product_providers.dart';
 
@@ -23,7 +23,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
   final _search = TextEditingController();
   Timer? _debounce;
 
-  final List<ProductListRow> _rows = [];
+  final List<PieceListRow> _rows = [];
   int _total = 0;
   bool _loading = false;
   bool _hasMore = true;
@@ -62,7 +62,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
     if (_loading || !_hasMore) return;
     setState(() => _loading = true);
     try {
-      final res = await ref.read(productRepositoryProvider).page(
+      final res = await ref.read(productRepositoryProvider).pagePieces(
             search: _search.text,
             limit: _pageSize,
             offset: _rows.length,
@@ -103,7 +103,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
         backgroundColor: context.p.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
-        label: const Text('New product'),
+        label: const Text('New design'),
       ),
       body: Column(
         children: [
@@ -112,7 +112,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
             child: TextField(
               controller: _search,
               decoration: InputDecoration(
-                hintText: 'Search name, code or SKU',
+                hintText: 'Search QR, design or colour',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _search.text.isEmpty
                     ? null
@@ -132,7 +132,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Text('${_rows.length} of $_total',
+                child: Text('${_rows.length} of $_total pieces',
                     style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
               ),
             ),
@@ -153,7 +153,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
       );
     }
     if (_rows.isEmpty && _loading) return const Center(child: CircularProgressIndicator());
-    if (_rows.isEmpty) return const Center(child: Text('No products match your search.'));
+    if (_rows.isEmpty) return const Center(child: Text('No pieces match your search.'));
     return RefreshIndicator(
       onRefresh: _reset,
       child: ListView.separated(
@@ -168,29 +168,28 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
               child: Center(child: CircularProgressIndicator()),
             );
           }
-          return _ProductCard(row: _rows[i]);
+          return _PieceCard(row: _rows[i]);
         },
       ),
     );
   }
 }
 
-class _ProductCard extends StatelessWidget {
-  const _ProductCard({required this.row});
-  final ProductListRow row;
-
-  String get _price {
-    if (row.minPrice == null) return 'No price';
-    if (row.maxPrice == null || row.minPrice == row.maxPrice) return money0(row.minPrice!);
-    return '${money0(row.minPrice!)} – ${money0(row.maxPrice!)}';
-  }
+class _PieceCard extends StatelessWidget {
+  const _PieceCard({required this.row});
+  final PieceListRow row;
 
   @override
   Widget build(BuildContext context) {
+    final colour = row.colour;
+    final meta = <String>[
+      if (colour != null && colour.isNotEmpty) colour,
+      if (row.size != null && row.size!.isNotEmpty) row.size!,
+    ].join(' · ');
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        onTap: () => context.push('/products/${row.id}'),
+        onTap: () => context.push('/products/${row.productId}'),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(
@@ -198,30 +197,45 @@ class _ProductCard extends StatelessWidget {
             children: [
               Row(
                 children: [
+                  Icon(Icons.qr_code_2, size: 18, color: context.p.textSecondary),
+                  const SizedBox(width: 6),
                   Expanded(
-                    child: Text(row.name,
-                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                    child: Text(row.tagCode,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: 0.3)),
                   ),
                   _StatusChip(status: row.status),
                 ],
               ),
-              const SizedBox(height: 2),
-              Text('${row.productCode}${row.categoryPath.isNotEmpty ? ' · ${row.categoryPath}' : ''}',
-                  style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
-              const SizedBox(height: 10),
+              const SizedBox(height: 6),
+              Text(row.name,
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+              const SizedBox(height: 8),
               Row(
                 children: [
-                  _Pill(icon: Icons.sell_outlined, text: _price),
-                  const SizedBox(width: 8),
-                  _Pill(icon: Icons.style_outlined, text: '${row.variantCount} variant${row.variantCount == 1 ? '' : 's'}'),
-                  const Spacer(),
-                  if (row.lowStock)
-                    Icon(Icons.warning_amber_rounded, color: context.p.danger, size: 18),
-                  const SizedBox(width: 4),
-                  Text('${row.totalStock} in stock',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: row.lowStock ? context.p.danger : context.p.text)),
+                  if (colour != null && colour.isNotEmpty) ...[
+                    Container(
+                      width: 14,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: colourSwatch(colour),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: context.p.border),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                  ],
+                  Expanded(
+                    child: Text(meta.isEmpty ? row.productCode : meta,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
+                  ),
+                  if (row.location != null && row.location!.isNotEmpty) ...[
+                    Icon(Icons.place_outlined, size: 14, color: context.p.textSecondary),
+                    const SizedBox(width: 3),
+                    Text(row.location!,
+                        style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
+                  ],
                 ],
               ),
             ],
@@ -235,35 +249,32 @@ class _ProductCard extends StatelessWidget {
 class _StatusChip extends StatelessWidget {
   const _StatusChip({required this.status});
   final String status;
+
+  String get _label {
+    switch (status) {
+      case 'in_transit':
+        return 'In transit';
+      case 'available':
+        return 'Available';
+      default:
+        return status.isEmpty ? '' : status[0].toUpperCase() + status.substring(1);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final color = status == 'active'
+    final color = status == 'available'
         ? context.p.success
-        : status == 'draft'
+        : status == 'in_transit'
             ? context.p.accent
-            : context.p.textSecondary;
+            : status == 'sold'
+                ? context.p.textSecondary
+                : context.p.danger;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(20)),
-      child: Text(status[0].toUpperCase() + status.substring(1),
+      child: Text(_label,
           style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color)),
-    );
-  }
-}
-
-class _Pill extends StatelessWidget {
-  const _Pill({required this.icon, required this.text});
-  final IconData icon;
-  final String text;
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 15, color: context.p.textSecondary),
-        const SizedBox(width: 4),
-        Text(text, style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
-      ],
     );
   }
 }
