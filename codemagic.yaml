@@ -48,8 +48,9 @@ workflows:
           EOF
       - name: Build APK + AAB
         script: |
-          flutter build apk --release
-          flutter build appbundle --release
+          # Auto-increment build number so each upload is always higher.
+          flutter build apk --release --build-number=$BUILD_NUMBER
+          flutter build appbundle --release --build-number=$BUILD_NUMBER
     artifacts:
       - build/**/outputs/apk/**/*.apk
       - build/**/outputs/bundle/**/*.aab
@@ -122,7 +123,10 @@ workflows:
           xcode-project use-profiles
       - name: Build IPA
         script: |
+          # Auto-increment build number (Codemagic's ever-rising counter) so the
+          # TestFlight upload is always higher than the previous one.
           flutter build ipa --release \
+            --build-number=$BUILD_NUMBER \
             --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
