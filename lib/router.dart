@@ -11,6 +11,8 @@ import 'features/pos/pos_screen.dart';
 import 'features/products/products_screen.dart';
 import 'features/products/product_detail_screen.dart';
 import 'features/products/product_form_screen.dart';
+import 'features/category/category_list_screen.dart';
+import 'features/category/category_form_screen.dart';
 import 'features/stock/stock_screen.dart';
 import 'features/stock/movements_screen.dart';
 import 'features/pieces/scan_identify_screen.dart';
@@ -25,6 +27,7 @@ import 'features/dashboard/dashboard_screen.dart';
 import 'features/invoices/invoices_screen.dart';
 import 'features/reports/reconciliation_screen.dart';
 import 'features/settings/settings_screen.dart';
+import 'features/settings/photo_guide_screen.dart';
 import 'features/production/production_screen.dart';
 import 'features/production/batches_screen.dart';
 import 'features/production/batch_detail_screen.dart';
@@ -75,6 +78,30 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/invoices/:id',
         builder: (_, state) => InvoiceScreen(invoiceId: state.pathParameters['id']!),
+      ),
+
+      // Category ( static paths before /:id so they win )
+      GoRoute(path: '/category', builder: (_, _) => const CategoryListScreen()),
+      GoRoute(
+        path: '/category/new',
+        builder: (_, state) => CategoryFormScreen(
+          initialParentId: (state.extra as Map?)?['parentId'] as String?,
+        ),
+      ),
+      GoRoute(
+        path: '/category/browse/:id',
+        builder: (_, state) => CategoryListScreen(parentId: state.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/category/:id/edit',
+        builder: (_, state) => CategoryFormScreen(categoryId: state.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/category/:id/photos',
+        builder: (_, state) => PhotoGuideScreen(
+          categoryId: state.pathParameters['id']!,
+          categoryName: (state.extra as Map?)?['name'] as String? ?? 'Category',
+        ),
       ),
 
       // Catalogue ( /new before /:id so the static path wins )

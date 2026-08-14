@@ -12,6 +12,16 @@ final sellableProvider = FutureProvider.autoDispose<List<SellableVariant>>((ref)
       .toList();
 });
 
+/// Every variant (price/stock/store-agnostic) — for goods-in / receiving, where
+/// you tag stock even before a price exists.
+final goodsInVariantsProvider = FutureProvider.autoDispose<List<SellableVariant>>((ref) async {
+  final api = ref.watch(apiClientProvider);
+  final data = await api.get('/variants');
+  return (data as List)
+      .map((e) => SellableVariant.fromJson((e as Map).cast<String, dynamic>()))
+      .toList();
+});
+
 /// The working cart. Keyed by variant id; quantity is clamped to available stock.
 class CartController extends Notifier<List<CartLine>> {
   @override

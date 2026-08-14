@@ -1,0 +1,382 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../theme/app_theme.dart';
+import '../../widgets/theme_button.dart';
+import 'category_providers.dart';
+
+/// One level of the category tree. `parentId == null` is the root (which, when
+/// [kCategoryFocus] is set, shows just that top category — e.g. Sarees). Tapping
+/// a node that has children drills deeper; tapping a leaf opens its edit form.
+class CategoryListScreen extends ConsumerStatefulWidget {
+  const CategoryListScreen({super.key, this.parentId});
+
+  final String? parentId;
+
+  @override
+  ConsumerState<CategoryListScreen> createState() => _CategoryListScreenState();
+}
+
+class _CategoryListScreenState extends ConsumerState<CategoryListScreen> {
+  final _search = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  bool _matches(CategoryRow c) {
+    if (_query.isEmpty) return true;
+    final q = _query.toLowerCase();
+    return c.name.toLowerCase().contains(q) || (c.code ?? '').toLowerCase().contains(q);
+  }
+
+  List<CategoryRow> _childrenOf(List<CategoryRow> all, String? pid) {
+    var kids = all.where((c) => c.parentId == pid).toList();
+    // At the root, honour the focus scope (show only e.g. Sarees).
+    if (pid == null && kCategoryFocus != null) {
+      kids = kids.where((c) => c.name == kCategoryFocus).toList();
+    }
+    kids.sort((a, b) => a.name.compareTo(b.name));
+    return kids;
+  }
+
+  bool _hasChildren(List<CategoryRow> all, String id) => all.any((c) => c.parentId == id);
+
+  // Direct children count and leaf-descendant count for a folder node.
+  ({int direct, int leaves, bool childrenAreFolders}) _counts(List<CategoryRow> all, String id) {
+    final direct = all.where((c) => c.parentId == id).toList();
+    final childrenAreFolders = direct.any((c) => _hasChildren(all, c.id));
+    int leaves = 0;
+    final stack = <String>[id];
+    while (stack.isNotEmpty) {
+      final cur = stack.removeLast();
+      final kids = all.where((c) => c.parentId == cur).toList();
+      if (kids.isEmpty) {
+        if (cur != id) leaves++;
+      } else {
+        for (final k in kids) {
+          stack.add(k.id);
+        }
+      }
+    }
+    return (direct: direct.length, leaves: leaves, childrenAreFolders: childrenAreFolders);
+  }
+
+  String _titleFor(List<CategoryRow>? all) {
+    if (widget.parentId == null) return 'Category';
+    if (all != null) {
+      for (final c in all) {
+        if (c.id == widget.parentId) return c.name;
+      }
+    }
+    return 'Category';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(categoriesProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_titleFor(async.valueOrNull)),
+        actions: [
+          const ThemeButton(),
+          IconButton(
+            tooltip: 'Refresh',
+            onPressed: () => ref.invalidate(categoriesProvider),
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          await context.push('/category/new', extra: {'parentId': widget.parentId});
+          ref.invalidate(categoriesProvider);
+        },
+        backgroundColor: context.p.primary,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text('New category'),
+      ),
+      body: async.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text('$e', style: TextStyle(color: context.p.danger)),
+            const SizedBox(height: 12),
+            FilledButton.tonal(
+              onPressed: () => ref.invalidate(categoriesProvider),
+              child: const Text('Try again'),
+            ),
+          ]),
+        ),
+        data: (all) => _body(context, all),
+      ),
+    );
+  }
+
+  Widget _body(BuildContext context, List<CategoryRow> all) {
+    final kids = _childrenOf(all, widget.parentId).where(_matches).toList();
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
+          child: TextField(
+            controller: _search,
+            decoration: InputDecoration(
+              hintText: 'Search',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _query.isEmpty
+                  ? null
+                  : IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _search.clear();
+                        setState(() => _query = '');
+                      },
+                    ),
+            ),
+            onChanged: (v) => setState(() => _query = v.trim()),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text('${kids.length} ${kids.length == 1 ? 'item' : 'items'}',
+                style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
+          ),
+        ),
+        Expanded(
+          child: kids.isEmpty
+              ? Center(
+                  child: Text(
+                    _query.isEmpty ? 'Nothing here yet. Tap “New category”.' : 'No matches.',
+                    style: TextStyle(color: context.p.textSecondary),
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: () async => ref.invalidate(categoriesProvider),
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
+                    itemCount: kids.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
+                    itemBuilder: (_, i) {
+                      final c = kids[i];
+                      if (_hasChildren(all, c.id)) {
+                        final n = _counts(all, c.id);
+                        return _FolderCard(
+                          row: c,
+                          subtitle: n.childrenAreFolders
+                              ? '${n.direct} sub-categories · ${n.leaves} categories'
+                              : '${n.leaves} categories',
+                          onTap: () async {
+                            await context.push('/category/browse/${c.id}');
+                            ref.invalidate(categoriesProvider);
+                          },
+                        );
+                      }
+                      return _CategoryCard(
+                        row: c,
+                        onTap: () async {
+                          await context.push('/category/${c.id}/edit');
+                          ref.invalidate(categoriesProvider);
+                        },
+                      );
+                    },
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+// A drill-down node (has children) — folder row with counts and a chevron.
+class _FolderCard extends StatelessWidget {
+  const _FolderCard({required this.row, required this.subtitle, required this.onTap});
+  final CategoryRow row;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Container(
+                height: 44,
+                width: 44,
+                decoration: BoxDecoration(
+                  color: context.p.primary.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.folder_outlined, color: context.p.primary),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(row.name,
+                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                    const SizedBox(height: 2),
+                    Text(subtitle,
+                        style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: context.p.textSecondary),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CategoryCard extends StatelessWidget {
+  const _CategoryCard({required this.row, required this.onTap});
+  final CategoryRow row;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final attrs = [row.technique, row.fabric, row.borderStyle, row.dyeType]
+        .where((s) => s != null && s.isNotEmpty)
+        .cast<String>()
+        .toList();
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(row.name,
+                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                  ),
+                  _StatusChip(status: row.status),
+                ],
+              ),
+              if ((row.code ?? '').isNotEmpty) ...[
+                const SizedBox(height: 4),
+                _CodePill(text: row.code!),
+              ],
+              if (attrs.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(attrs.join('  ·  '),
+                    style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
+              ],
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  _Pill(
+                    icon: Icons.inventory_2_outlined,
+                    text: '${row.productCount} product${row.productCount == 1 ? '' : 's'}',
+                  ),
+                  if ((row.hsnCode ?? '').isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    _Pill(icon: Icons.receipt_long_outlined, text: 'HSN ${row.hsnCode}'),
+                  ],
+                  if ((row.gstRate ?? '').isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    _Pill(icon: Icons.percent, text: 'GST ${_gst(row.gstRate!)}%'),
+                  ],
+                  const Spacer(),
+                  // Jump straight to this category's photo guide.
+                  InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: () => context.push('/category/${row.id}/photos', extra: {'name': row.name}),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(Icons.photo_camera_outlined, size: 20, color: context.p.primary),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  static String _gst(String v) {
+    final d = double.tryParse(v);
+    if (d == null) return v;
+    return d == d.roundToDouble() ? d.toInt().toString() : d.toString();
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({required this.status});
+  final String status;
+  @override
+  Widget build(BuildContext context) {
+    final active = status == 'active';
+    final color = active ? context.p.success : context.p.textSecondary;
+    final label = status.isEmpty ? 'Active' : status[0].toUpperCase() + status.substring(1);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(20)),
+      child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color)),
+    );
+  }
+}
+
+class _CodePill extends StatelessWidget {
+  const _CodePill({required this.text});
+  final String text;
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: context.p.primary.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(text,
+            style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+                color: context.p.primaryDark)),
+      ),
+    );
+  }
+}
+
+class _Pill extends StatelessWidget {
+  const _Pill({required this.icon, required this.text});
+  final IconData icon;
+  final String text;
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 15, color: context.p.textSecondary),
+        const SizedBox(width: 4),
+        Text(text, style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
+      ],
+    );
+  }
+}

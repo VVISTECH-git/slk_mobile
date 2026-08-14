@@ -14,6 +14,13 @@ import 'piece_providers.dart';
 /// Goods-in / labelling: pick a product + location + count, mint that many
 /// unique QR codes, then print the tags. This is where physical units enter the
 /// serialized system.
+// Standard colour list (from the Product Master) — colour lives on the variant.
+const _colours = [
+  'Red', 'Maroon', 'Rani Pink', 'Pink', 'Peach', 'Orange', 'Rust', 'Mustard',
+  'Yellow', 'Gold', 'Cream', 'Off White', 'White', 'Beige', 'Brown', 'Coffee',
+  'Green', 'Mehendi', 'Teal', 'Sea Green', 'Blue', 'Sky Blue', 'Navy', 'Indigo', 'Purple',
+];
+
 class GoodsInScreen extends ConsumerStatefulWidget {
   const GoodsInScreen({super.key});
 
@@ -24,6 +31,7 @@ class GoodsInScreen extends ConsumerStatefulWidget {
 class _GoodsInScreenState extends ConsumerState<GoodsInScreen> {
   String? _locationId;
   String? _variantId;
+  String? _colour;
   String _query = '';
   final _count = TextEditingController(text: '1');
   bool _busy = false;
@@ -47,6 +55,7 @@ class _GoodsInScreenState extends ConsumerState<GoodsInScreen> {
             variantId: v.id,
             locationId: _locationId!,
             count: count,
+            colour: _colour,
           );
       setState(() => _codes = codes);
       if (!mounted) return;
@@ -61,7 +70,7 @@ class _GoodsInScreenState extends ConsumerState<GoodsInScreen> {
   @override
   Widget build(BuildContext context) {
     final locations = ref.watch(transferLocationsProvider);
-    final variantsAsync = ref.watch(sellableProvider);
+    final variantsAsync = ref.watch(goodsInVariantsProvider);
 
     return Scaffold(
       appBar: AppBar(actions: const [ThemeButton()], title: const Text('Goods-in · label stock')),
@@ -115,6 +124,17 @@ class _GoodsInScreenState extends ConsumerState<GoodsInScreen> {
                         ),
                       )),
                 ],
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String?>(
+                  initialValue: _colour,
+                  isExpanded: true,
+                  decoration: const InputDecoration(labelText: 'Colour (optional)', border: OutlineInputBorder()),
+                  items: [
+                    const DropdownMenuItem(value: null, child: Text('— No colour —')),
+                    ..._colours.map((c) => DropdownMenuItem(value: c, child: Text(c))),
+                  ],
+                  onChanged: (v) => setState(() => _colour = v),
+                ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: _count,

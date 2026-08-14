@@ -1,0 +1,153 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/providers.dart';
+
+/// When set, the Category module is scoped to this top-level category and its
+/// sub-categories only (e.g. 'Sarees'). Set to `null` to show every category.
+/// Single switch so the scope is trivially reversible.
+// ignore: unnecessary_nullable_for_final_variable_declarations
+const String? kCategoryFocus = 'Sarees';
+
+/// One row of the Category list (`GET /categories/full`) — a (sub-)category plus
+/// its template attributes (resolved to names) and how many products use it.
+class CategoryRow {
+  const CategoryRow({
+    required this.id,
+    required this.name,
+    required this.productCount,
+    required this.status,
+    this.code,
+    this.parentId,
+    this.parentName,
+    this.fabricId,
+    this.techniqueId,
+    this.dyeTypeId,
+    this.borderStyleId,
+    this.fabric,
+    this.technique,
+    this.dyeType,
+    this.borderStyle,
+    this.unitType,
+    this.hsnCode,
+    this.gstRate,
+  });
+
+  final String id;
+  final String name;
+  final int productCount;
+  final String status;
+  final String? code;
+  final String? parentId;
+  final String? parentName;
+  final String? fabricId;
+  final String? techniqueId;
+  final String? dyeTypeId;
+  final String? borderStyleId;
+  final String? fabric;
+  final String? technique;
+  final String? dyeType;
+  final String? borderStyle;
+  final String? unitType;
+  final String? hsnCode;
+  final String? gstRate;
+
+  factory CategoryRow.fromJson(Map<String, dynamic> j) => CategoryRow(
+        id: j['id'] as String,
+        name: (j['name'] ?? '') as String,
+        productCount: (j['productCount'] as num?)?.toInt() ?? 0,
+        status: (j['status'] ?? 'active') as String,
+        code: j['code'] as String?,
+        parentId: j['parentId'] as String?,
+        parentName: j['parentName'] as String?,
+        fabricId: j['fabricId'] as String?,
+        techniqueId: j['techniqueId'] as String?,
+        dyeTypeId: j['dyeTypeId'] as String?,
+        borderStyleId: j['borderStyleId'] as String?,
+        fabric: j['fabric'] as String?,
+        technique: j['technique'] as String?,
+        dyeType: j['dyeType'] as String?,
+        borderStyle: j['borderStyle'] as String?,
+        unitType: j['unitType'] as String?,
+        hsnCode: j['hsnCode'] as String?,
+        gstRate: j['gstRate']?.toString(),
+      );
+}
+
+/// A named lookup value (fabric / technique / dye / border / category).
+class NamedRef {
+  const NamedRef(this.id, this.name, {this.parentId});
+  final String id;
+  final String name;
+  final String? parentId;
+
+  factory NamedRef.fromJson(Map<String, dynamic> j) =>
+      NamedRef(j['id'] as String, (j['name'] ?? '') as String, parentId: j['parentId'] as String?);
+}
+
+/// Dropdown data for the Category form (`GET /products/lookups`).
+class CategoryLookups {
+  const CategoryLookups({
+    required this.categories,
+    required this.fabrics,
+    required this.techniques,
+    required this.dyeTypes,
+    required this.borderStyles,
+  });
+
+  final List<NamedRef> categories;
+  final List<NamedRef> fabrics;
+  final List<NamedRef> techniques;
+  final List<NamedRef> dyeTypes;
+  final List<NamedRef> borderStyles;
+
+  /// Only top-level categories (no parent) — candidate parents for a new one.
+  List<NamedRef> get topCategories => categories.where((c) => c.parentId == null).toList();
+
+  static List<NamedRef> _list(dynamic v) =>
+      ((v as List?) ?? []).map((e) => NamedRef.fromJson((e as Map).cast<String, dynamic>())).toList();
+
+  factory CategoryLookups.fromJson(Map<String, dynamic> j) => CategoryLookups(
+        categories: _list(j['categories']),
+        fabrics: _list(j['fabrics']),
+        techniques: _list(j['techniques']),
+        dyeTypes: _list(j['dyeTypes']),
+        borderStyles: _list(j['borderStyles']),
+      );
+}
+
+/// The category list with template attributes + product counts.
+final categoriesProvider = FutureProvider.autoDispose<List<CategoryRow>>((ref) async {
+  final api = ref.watch(apiClientProvider);
+  final data = await api.get('/categories/full');
+  return ((data as List?) ?? [])
+      .map((e) => CategoryRow.fromJson((e as Map).cast<String, dynamic>()))
+      .toList();
+});
+
+/// Dropdown data shared by the form.
+final categoryLookupsProvider = FutureProvider.autoDispose<CategoryLookups>((ref) async {
+  final api = ref.watch(apiClientProvider);
+  final data = await api.get('/products/lookups');
+  return CategoryLookups.fromJson((data as Map).cast<String, dynamic>());
+});
+
+/// Category write operations (owner-only on the server).
+final categoryRepositoryProvider = Provider((ref) => CategoryRepository(ref));
+
+class CategoryRepository {
+  CategoryRepository(this.ref);
+  final Ref ref;
+
+  Future<String> create(Map<String, dynamic> input) async {
+    final data = await ref.read(apiClientProvider).post('/settings/categories', body: input);
+    return ((data as Map?)?['id'] ?? '') as String;
+  }
+
+  Future<void> update(String id, Map<String, dynamic> input) async {
+    await ref.read(apiClientProvider).patch('/settings/categories/$id', body: input);
+  }
+
+  Future<void> delete(String id) async {
+    await ref.read(apiClientProvider).delete('/settings/categories/$id');
+  }
+}

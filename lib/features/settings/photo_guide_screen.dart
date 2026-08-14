@@ -50,7 +50,10 @@ class PhotoGuideScreen extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Text(categoryName,
-                  style: TextStyle(color: context.p.textSecondary, fontSize: 13)),
+                  style: TextStyle(
+                      color: context.p.onAppBar.withValues(alpha: 0.9),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500)),
             ),
           ),
         ),
@@ -66,8 +69,8 @@ class PhotoGuideScreen extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(4, 0, 4, 12),
                 child: Text(
-                  'These shots apply to every product in this category. Staff will see each '
-                  'label and its reference while adding photos.',
+                  'A photo checklist for this category. When staff add a product here, they’ll '
+                  'be asked to take each shot below — the sample image shows them how.',
                   style: TextStyle(color: context.p.textSecondary, fontSize: 13, height: 1.35),
                 ),
               ),
@@ -132,36 +135,58 @@ class PhotoGuideScreen extends ConsumerWidget {
     final guide = slot['guide'] as String?;
     final required = slot['required'] == true;
     return Card(
+      // Key on the image content so clearing/replacing a reference re-renders the
+      // row immediately instead of showing the stale thumbnail.
+      key: ValueKey('${slot['id']}:${guide?.hashCode ?? 'none'}'),
       child: ListTile(
-        leading: SizedBox(
-          width: 48,
-          height: 48,
-          child: guide != null && guide.isNotEmpty
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: Image.memory(base64Decode(guide), fit: BoxFit.cover),
-                )
-              : Container(
-                  decoration: BoxDecoration(
-                    color: context.p.surface2,
+        // The image tile IS the capture button — tap to shoot/replace/remove.
+        leading: InkWell(
+          borderRadius: BorderRadius.circular(6),
+          onTap: () => _quickCapture(context, ref, slot),
+          child: SizedBox(
+            width: 48,
+            height: 48,
+            child: guide != null && guide.isNotEmpty
+                ? ClipRRect(
                     borderRadius: BorderRadius.circular(6),
+                    child: Image.memory(base64Decode(guide), fit: BoxFit.cover),
+                  )
+                : Container(
+                    decoration: BoxDecoration(
+                      color: context.p.primary.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Icon(Icons.add_a_photo_outlined, color: context.p.primary, size: 22),
                   ),
-                  child: Icon(Icons.image_outlined, color: context.p.textSecondary),
-                ),
+          ),
         ),
         title: Text('$number. ${slot['label']}'),
         subtitle: Text(required ? 'Required' : 'Optional',
             style: TextStyle(fontSize: 12, color: required ? context.p.primary : context.p.textSecondary)),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: Icon(Icons.edit_outlined, size: 20, color: context.p.textSecondary),
-              onPressed: () => _editSlot(context, ref, existing: slot),
+        // Edit/Delete live in an overflow menu so the destructive action can't be
+        // hit by accident (photo actions are on the image tile).
+        trailing: PopupMenuButton<String>(
+          icon: Icon(Icons.more_vert, color: context.p.textSecondary),
+          onSelected: (v) {
+            if (v == 'edit') _editSlot(context, ref, existing: slot);
+            if (v == 'delete') _confirmDelete(context, ref, slot);
+          },
+          itemBuilder: (menuCtx) => [
+            PopupMenuItem(
+              value: 'edit',
+              child: Row(children: [
+                Icon(Icons.edit_outlined, size: 20, color: menuCtx.p.textSecondary),
+                const SizedBox(width: 12),
+                const Text('Edit details'),
+              ]),
             ),
-            IconButton(
-              icon: Icon(Icons.delete_outline, color: context.p.danger),
-              onPressed: () => _confirmDelete(context, ref, slot),
+            PopupMenuItem(
+              value: 'delete',
+              child: Row(children: [
+                Icon(Icons.delete_outline, size: 20, color: menuCtx.p.danger),
+                const SizedBox(width: 12),
+                Text('Delete shot', style: TextStyle(color: menuCtx.p.danger)),
+              ]),
             ),
           ],
         ),
@@ -197,6 +222,69 @@ class PhotoGuideScreen extends ConsumerWidget {
     if (ok == true) {
       await _guard(context, ref, () => _repo(ref).deletePhotoSlot(slot['id'] as String));
     }
+  }
+
+  // Tap the slot image → capture/replace/remove directly, no editor, auto-saved.
+  Future<void> _quickCapture(BuildContext context, WidgetRef ref, Map<String, dynamic> slot) async {
+    final hasImage = (slot['guide'] as String?)?.isNotEmpty == true;
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetCtx) => SafeArea(
+        child: Wrap(children: [
+          ListTile(
+            leading: const Icon(Icons.photo_camera_outlined),
+            title: Text(hasImage ? 'Retake photo' : 'Take a photo'),
+            onTap: () {
+              Navigator.pop(sheetCtx);
+              _pickAndSave(context, ref, slot, ImageSource.camera);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.photo_library_outlined),
+            title: const Text('Choose from gallery'),
+            onTap: () {
+              Navigator.pop(sheetCtx);
+              _pickAndSave(context, ref, slot, ImageSource.gallery);
+            },
+          ),
+          if (hasImage)
+            ListTile(
+              leading: Icon(Icons.delete_outline, color: context.p.danger),
+              title: const Text('Remove photo'),
+              onTap: () {
+                Navigator.pop(sheetCtx);
+                _saveGuide(context, ref, slot, ''); // '' clears
+              },
+            ),
+        ]),
+      ),
+    );
+  }
+
+  Future<void> _pickAndSave(
+      BuildContext context, WidgetRef ref, Map<String, dynamic> slot, ImageSource source) async {
+    try {
+      final x = await ImagePicker()
+          .pickImage(source: source, maxWidth: 1200, maxHeight: 1200, imageQuality: 72);
+      if (x == null) return;
+      final bytes = await x.readAsBytes();
+      if (!context.mounted) return;
+      await _saveGuide(context, ref, slot, base64Encode(bytes));
+    } catch (e) {
+      if (context.mounted) showError(context, 'Could not add image: $e');
+    }
+  }
+
+  Future<void> _saveGuide(
+      BuildContext context, WidgetRef ref, Map<String, dynamic> slot, String guide) async {
+    await _guard(context, ref, () => _repo(ref).savePhotoSlot(
+          id: slot['id'] as String,
+          categoryId: categoryId,
+          label: slot['label'] as String,
+          required: slot['required'] == true,
+          position: slot['position'] as int? ?? 0,
+          guide: guide,
+        ));
   }
 
   Future<void> _editSlot(

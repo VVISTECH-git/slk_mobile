@@ -15,15 +15,17 @@ class _Module {
   final bool ownerOnly;
 }
 
-// Phase 1: focus on Products only. The rest are parked (hidden from Home, not
+// Phase 1: focus on Category only. The rest are parked (hidden from Home, not
 // deleted) — uncomment to bring a module back.
 const _modules = [
+  _Module('Category', Icons.category_outlined, '/category'),
   _Module('Products', Icons.inventory_2_outlined, '/products'),
+  _Module('Receive stock', Icons.qr_code_2, '/goods-in', ownerOnly: true),
+  _Module('Identify item', Icons.qr_code_scanner, '/scan'),
+  _Module('Sell (scan)', Icons.point_of_sale, '/pieces/sell'),
   // _Module('Point of Sale', Icons.point_of_sale, '/pos'),
   // _Module('Dashboard', Icons.dashboard_outlined, '/dashboard'),
   // _Module('Stock', Icons.warehouse_outlined, '/stock'),
-  // _Module('Identify item', Icons.qr_code_scanner, '/scan'),
-  // _Module('Goods-in · label', Icons.qr_code_2, '/goods-in', ownerOnly: true),
   // _Module('Transfers', Icons.local_shipping_outlined, '/transfers'),
   // _Module('Production', Icons.precision_manufacturing_outlined, '/production'),
   // _Module('Invoices', Icons.receipt_long_outlined, '/invoices'),

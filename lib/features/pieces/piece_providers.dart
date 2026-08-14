@@ -23,16 +23,19 @@ class PieceRepository {
     }
   }
 
-  /// Goods-in: mint [count] unique codes for a variant at a location.
+  /// Goods-in: mint [count] unique codes for a variant at a location. When a
+  /// [colour] is given, the server mints into that colour's variant (created if new).
   Future<List<String>> generate({
     required String variantId,
     required String locationId,
     required int count,
+    String? colour,
   }) async {
     final data = await ref.read(apiClientProvider).post('/stock/pieces', body: {
       'variantId': variantId,
       'locationId': locationId,
       'count': count,
+      if (colour != null && colour.isNotEmpty) 'colour': colour,
     });
     final map = (data as Map).cast<String, dynamic>();
     return ((map['codes'] as List?) ?? []).cast<String>();
