@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../models/product.dart';
 import '../../widgets/theme_button.dart';
 import '../../widgets/async_view.dart';
+import '../../widgets/picker_field.dart';
 import '../transfers/transfer_providers.dart';
 import 'piece_providers.dart';
 import 'scan_collector.dart';
@@ -62,10 +63,10 @@ class _DispatchPiecesScreenState extends ConsumerState<DispatchPiecesScreen> {
         data: (locs) => ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            DropdownButtonFormField<String>(
-              initialValue: _to,
-              decoration: const InputDecoration(labelText: 'Send to', border: OutlineInputBorder()),
-              items: locs.map((l) => DropdownMenuItem(value: l.id, child: Text(l.name))).toList(),
+            PickerField(
+              label: 'Send to',
+              value: _to,
+              options: [for (final l in locs) PickerOption(l.id, l.name)],
               onChanged: (v) => setState(() => _to = v),
             ),
             const SizedBox(height: 12),

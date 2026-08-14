@@ -9,6 +9,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/theme_button.dart';
 import '../../widgets/async_view.dart';
 import '../../widgets/photo_viewer.dart';
+import '../../widgets/picker_field.dart';
 import '../settings/settings_providers.dart';
 import 'product_providers.dart';
 
@@ -264,7 +265,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   }
 
   // Build "Parent › Child" paths for the category dropdown.
-  List<DropdownMenuItem<String>> _categoryItems(List cats) {
+  List<PickerOption> _categoryOptions(List cats) {
     final byId = {for (final c in cats) c['id'] as String: c as Map};
     String path(Map c) {
       final parts = <String>[];
@@ -281,7 +282,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
     final items = cats.map((c) => (id: c['id'] as String, label: path(c as Map))).toList()
       ..sort((a, b) => a.label.compareTo(b.label));
-    return items.map((e) => DropdownMenuItem(value: e.id, child: Text(e.label))).toList();
+    return [for (final e in items) PickerOption(e.id, e.label)];
   }
 
   Future<void> _save(List<Map<String, dynamic>> locations) async {
@@ -406,37 +407,37 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 decoration: const InputDecoration(labelText: 'Product name *', hintText: 'e.g. Kalamkari Cotton Saree'),
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: _categoryId,
-                isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Category *', hintText: 'Pick a category'),
-                items: _categoryItems(cats),
+              PickerField(
+                label: 'Category *',
+                hint: 'Pick a category',
+                value: _categoryId,
+                options: _categoryOptions(cats),
                 onChanged: (v) => setState(() => _categoryId = v),
               ),
               const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _status,
-                      decoration: const InputDecoration(labelText: 'Status'),
-                      items: const [
-                        DropdownMenuItem(value: 'draft', child: Text('Draft')),
-                        DropdownMenuItem(value: 'active', child: Text('Active')),
-                        DropdownMenuItem(value: 'inactive', child: Text('Inactive')),
+                    child: PickerField(
+                      label: 'Status',
+                      value: _status,
+                      options: const [
+                        PickerOption('draft', 'Draft'),
+                        PickerOption('active', 'Active'),
+                        PickerOption('inactive', 'Inactive'),
                       ],
                       onChanged: (v) => setState(() => _status = v ?? 'draft'),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _unitType,
-                      decoration: const InputDecoration(labelText: 'Unit'),
-                      items: const [
-                        DropdownMenuItem(value: 'piece', child: Text('Piece')),
-                        DropdownMenuItem(value: 'set', child: Text('Set')),
-                        DropdownMenuItem(value: 'meter', child: Text('Meter')),
+                    child: PickerField(
+                      label: 'Unit',
+                      value: _unitType,
+                      options: const [
+                        PickerOption('piece', 'Piece'),
+                        PickerOption('set', 'Set'),
+                        PickerOption('meter', 'Meter'),
                       ],
                       onChanged: (v) => setState(() => _unitType = v ?? 'piece'),
                     ),
@@ -573,14 +574,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   Widget _attrDropdown(String label, dynamic rows, String? value, ValueChanged<String?> onChanged) {
     final list = (rows as List?) ?? [];
-    return DropdownButtonFormField<String>(
-      initialValue: value,
-      isExpanded: true,
-      decoration: InputDecoration(labelText: label),
-      items: [
-        const DropdownMenuItem(value: null, child: Text('—')),
-        ...list.map((r) => DropdownMenuItem(value: (r as Map)['id'] as String, child: Text('${r['name']}'))),
-      ],
+    return PickerField(
+      label: label,
+      value: value,
+      allowClear: true,
+      options: [for (final r in list) PickerOption((r as Map)['id'] as String, '${r['name']}')],
       onChanged: onChanged,
     );
   }
@@ -652,12 +650,11 @@ class _VariantCard extends StatelessWidget {
             ),
             Row(children: [
               Expanded(
-                child: DropdownButtonFormField<String>(
-                  key: ValueKey('colour-$index-${variant.color.text}'),
-                  initialValue: _variantColours.contains(variant.color.text.trim()) ? variant.color.text.trim() : null,
-                  isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Colour'),
-                  items: [for (final c in _variantColours) DropdownMenuItem(value: c, child: Text(c))],
+                child: PickerField(
+                  label: 'Colour',
+                  value: _variantColours.contains(variant.color.text.trim()) ? variant.color.text.trim() : null,
+                  options: colourOptions(_variantColours),
+                  allowClear: true,
                   onChanged: (v) {
                     variant.color.text = v ?? '';
                     onChanged();
@@ -666,12 +663,11 @@ class _VariantCard extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: DropdownButtonFormField<String>(
-                  key: ValueKey('size-$index-${variant.size.text}'),
-                  initialValue: _variantSizes.contains(variant.size.text.trim()) ? variant.size.text.trim() : null,
-                  isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Size'),
-                  items: [for (final s in _variantSizes) DropdownMenuItem(value: s, child: Text(s))],
+                child: PickerField(
+                  label: 'Size',
+                  value: _variantSizes.contains(variant.size.text.trim()) ? variant.size.text.trim() : null,
+                  options: plainOptions(_variantSizes),
+                  allowClear: true,
                   onChanged: (v) {
                     variant.size.text = v ?? '';
                     onChanged();

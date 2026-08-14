@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/async_view.dart';
+import '../../widgets/picker_field.dart';
 import '../../widgets/theme_button.dart';
 import 'auth_controller.dart';
 
@@ -133,22 +134,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         Text('Choose your name and enter your PIN.',
             style: TextStyle(color: context.p.textSecondary)),
         const SizedBox(height: 20),
-        DropdownButtonFormField<String>(
-          initialValue: _staffId,
-          decoration: const InputDecoration(
-            labelText: 'Staff member',
-            hintText: 'Select who is signing in',
-            floatingLabelBehavior: FloatingLabelBehavior.always,
-          ),
-          items: staff
-              .map((s) => DropdownMenuItem(
-                    value: s['id'] as String,
-                    child: Text(
-                      '${s['name']}'
-                      '${s['storeName'] != null ? '  ·  ${s['storeName']}' : ''}',
-                    ),
-                  ))
-              .toList(),
+        PickerField(
+          label: 'Staff member',
+          hint: 'Select who is signing in',
+          value: _staffId,
+          options: [
+            for (final s in staff)
+              PickerOption(
+                s['id'] as String,
+                '${s['name']}'
+                    '${s['storeName'] != null ? '  ·  ${s['storeName']}' : ''}',
+              ),
+          ],
           onChanged: (v) => setState(() {
             _staffId = v;
             _staffStoreId = staff.where((s) => s['id'] == v).firstOrNull?['storeId'] as String?;
@@ -157,16 +154,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ),
         if (needsStorePick) ...[
           const SizedBox(height: 14),
-          DropdownButtonFormField<String>(
-            initialValue: _pickedStoreId,
-            decoration: const InputDecoration(
-              labelText: 'Operate at store',
-              hintText: 'Select a store',
-              floatingLabelBehavior: FloatingLabelBehavior.always,
-            ),
-            items: stores
-                .map((s) => DropdownMenuItem(value: s['id'] as String, child: Text('${s['name']}')))
-                .toList(),
+          PickerField(
+            label: 'Operate at store',
+            hint: 'Select a store',
+            value: _pickedStoreId,
+            options: [
+              for (final s in stores) PickerOption(s['id'] as String, '${s['name']}'),
+            ],
             onChanged: (v) => setState(() => _pickedStoreId = v),
           ),
         ],

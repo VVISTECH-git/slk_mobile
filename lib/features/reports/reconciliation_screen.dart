@@ -7,6 +7,7 @@ import '../../core/providers.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/theme_button.dart';
 import '../../widgets/async_view.dart';
+import '../../widgets/picker_field.dart';
 
 typedef ReconKey = ({String? date, String? storeId});
 
@@ -80,13 +81,13 @@ class _ReconciliationScreenState extends ConsumerState<ReconciliationScreen> {
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: DropdownButtonFormField<String?>(
-                      initialValue: _storeId,
-                      decoration: const InputDecoration(labelText: 'Store', isDense: true),
-                      items: [
-                        const DropdownMenuItem(value: null, child: Text('All stores')),
-                        ...stores.map((s) => DropdownMenuItem(
-                            value: (s as Map)['id'] as String, child: Text('${s['name']}'))),
+                    child: PickerField(
+                      label: 'Store',
+                      hint: 'All stores',
+                      value: _storeId,
+                      allowClear: true,
+                      options: [
+                        for (final s in stores) PickerOption((s as Map)['id'] as String, '${s['name']}'),
                       ],
                       onChanged: (v) => setState(() => _storeId = v),
                     ),

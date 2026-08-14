@@ -190,7 +190,7 @@ class _ProductCard extends StatelessWidget {
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        onTap: () => context.push('/products/${row.productId ?? row.id}'),
+        onTap: () => context.push('/products/${row.id}'),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(
@@ -202,10 +202,6 @@ class _ProductCard extends StatelessWidget {
                     child: Text(row.name,
                         style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                   ),
-                  if ((row.colour ?? '').isNotEmpty) ...[
-                    _ColourChip(colour: row.colour!),
-                    const SizedBox(width: 8),
-                  ],
                   _StatusChip(status: row.status),
                 ],
               ),
@@ -216,6 +212,8 @@ class _ProductCard extends StatelessWidget {
               Row(
                 children: [
                   _Pill(icon: Icons.sell_outlined, text: _price),
+                  const SizedBox(width: 8),
+                  _Pill(icon: Icons.style_outlined, text: '${row.variantCount} variant${row.variantCount == 1 ? '' : 's'}'),
                   const Spacer(),
                   if (row.lowStock)
                     Icon(Icons.warning_amber_rounded, color: context.p.danger, size: 18),
@@ -230,23 +228,6 @@ class _ProductCard extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _ColourChip extends StatelessWidget {
-  const _ColourChip({required this.colour});
-  final String colour;
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: context.p.primary.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(colour,
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: context.p.primaryDark)),
     );
   }
 }

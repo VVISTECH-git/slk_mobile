@@ -6,6 +6,7 @@ import '../../models/transfer.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/theme_button.dart';
 import '../../widgets/async_view.dart';
+import '../../widgets/picker_field.dart';
 import 'transfer_providers.dart';
 import 'transfers_screen.dart' show TransferStatusChip;
 
@@ -255,13 +256,11 @@ class _TransferDetailScreenState extends ConsumerState<TransferDetailScreen> {
                     style: TextStyle(fontSize: 12, color: context.p.danger, fontWeight: FontWeight.w600)),
               ]),
               const SizedBox(height: 6),
-              DropdownButtonFormField<String>(
-                initialValue: (_reason[it.id] ?? '').isEmpty ? null : _reason[it.id],
-                isDense: true,
-                decoration: const InputDecoration(labelText: 'Reason', border: OutlineInputBorder()),
-                items: [
-                  for (final r in _reasons)
-                    DropdownMenuItem(value: r, child: Text(r[0].toUpperCase() + r.substring(1))),
+              PickerField(
+                label: 'Reason',
+                value: (_reason[it.id] ?? '').isEmpty ? null : _reason[it.id],
+                options: [
+                  for (final r in _reasons) PickerOption(r, r[0].toUpperCase() + r.substring(1)),
                 ],
                 onChanged: (v) => setState(() => _reason[it.id] = v ?? ''),
               ),

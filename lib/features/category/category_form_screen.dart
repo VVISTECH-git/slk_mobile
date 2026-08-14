@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../theme/app_theme.dart';
+import '../../widgets/picker_field.dart';
 import '../auth/auth_controller.dart';
 import 'category_providers.dart';
 
@@ -259,21 +260,22 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
           _sectionLabel('Classification'),
-          _dropdown<String?>(
+          _dropdown(
             label: kCategoryFocus != null ? 'Sub-category (under $kCategoryFocus)' : 'Parent category',
             value: _parentId,
-            items: kCategoryFocus != null
-                ? _focusSubs(lookups)
-                    .where((c) => c.id != widget.categoryId)
-                    .map((c) => DropdownMenuItem<String?>(value: c.id, child: Text(c.name)))
-                    .toList()
+            options: kCategoryFocus != null
+                ? [
+                    for (final c in _focusSubs(lookups).where((c) => c.id != widget.categoryId))
+                      PickerOption(c.id, c.name)
+                  ]
                 : [
-                    const DropdownMenuItem<String?>(value: null, child: Text('None (top-level)')),
-                    ...lookups.topCategories
-                        // Can't be its own parent.
-                        .where((c) => c.id != widget.categoryId)
-                        .map((c) => DropdownMenuItem<String?>(value: c.id, child: Text(c.name))),
+                    // Can't be its own parent.
+                    for (final c in lookups.topCategories.where((c) => c.id != widget.categoryId))
+                      PickerOption(c.id, c.name)
                   ],
+            // Non-focus mode allowed "None (top-level)".
+            allowClear: kCategoryFocus == null,
+            hint: kCategoryFocus == null ? 'None (top-level)' : null,
             onChanged: (v) => setState(() => _parentId = v),
           ),
           const SizedBox(height: 14),
@@ -315,40 +317,48 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
           Text('New products in this category inherit these.',
               style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
           const SizedBox(height: 12),
-          _dropdown<String?>(
+          _dropdown(
             label: 'Technique',
             value: _techniqueId,
-            items: _refItems(lookups.techniques),
+            options: _refItems(lookups.techniques),
+            allowClear: true,
+            hint: '—',
             onChanged: (v) => setState(() => _techniqueId = v),
           ),
           const SizedBox(height: 14),
-          _dropdown<String?>(
+          _dropdown(
             label: 'Fabric',
             value: _fabricId,
-            items: _refItems(lookups.fabrics),
+            options: _refItems(lookups.fabrics),
+            allowClear: true,
+            hint: '—',
             onChanged: (v) => setState(() => _fabricId = v),
           ),
           const SizedBox(height: 14),
-          _dropdown<String?>(
+          _dropdown(
             label: 'Border style',
             value: _borderStyleId,
-            items: _refItems(lookups.borderStyles),
+            options: _refItems(lookups.borderStyles),
+            allowClear: true,
+            hint: '—',
             onChanged: (v) => setState(() => _borderStyleId = v),
           ),
           const SizedBox(height: 14),
-          _dropdown<String?>(
+          _dropdown(
             label: 'Dye type',
             value: _dyeTypeId,
-            items: _refItems(lookups.dyeTypes),
+            options: _refItems(lookups.dyeTypes),
+            allowClear: true,
+            hint: '—',
             onChanged: (v) => setState(() => _dyeTypeId = v),
           ),
           const SizedBox(height: 14),
-          _dropdown<String>(
+          _dropdown(
             label: 'Unit',
             value: _unit,
-            items: _units
-                .map((u) => DropdownMenuItem(value: u, child: Text(u[0].toUpperCase() + u.substring(1))))
-                .toList(),
+            options: [
+              for (final u in _units) PickerOption(u, u[0].toUpperCase() + u.substring(1))
+            ],
             onChanged: (v) => setState(() => _unit = v ?? 'piece'),
           ),
 
@@ -463,10 +473,8 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
       ..sort((a, b) => a.name.compareTo(b.name));
   }
 
-  List<DropdownMenuItem<String?>> _refItems(List<NamedRef> refs) => [
-        const DropdownMenuItem(value: null, child: Text('—')),
-        ...refs.map((r) => DropdownMenuItem(value: r.id, child: Text(r.name))),
-      ];
+  List<PickerOption> _refItems(List<NamedRef> refs) =>
+      [for (final r in refs) PickerOption(r.id, r.name)];
 
   Widget _sectionLabel(String text) => Padding(
         padding: const EdgeInsets.only(bottom: 8),
@@ -478,18 +486,21 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
                 color: context.p.primaryDark)),
       );
 
-  Widget _dropdown<T>({
+  Widget _dropdown({
     required String label,
-    required T value,
-    required List<DropdownMenuItem<T>> items,
-    required ValueChanged<T?> onChanged,
+    required String? value,
+    required List<PickerOption> options,
+    required ValueChanged<String?> onChanged,
+    bool allowClear = false,
+    String? hint,
   }) {
-    return DropdownButtonFormField<T>(
-      initialValue: value,
-      isExpanded: true,
-      decoration: InputDecoration(labelText: label),
-      items: items,
+    return PickerField(
+      label: label,
+      value: value,
+      options: options,
       onChanged: onChanged,
+      allowClear: allowClear,
+      hint: hint,
     );
   }
 }

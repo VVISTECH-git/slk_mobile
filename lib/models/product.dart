@@ -12,15 +12,9 @@ class ProductListRow {
     required this.totalStock,
     required this.stockByLoc,
     required this.lowStock,
-    this.productId,
-    this.colour,
   });
 
   final String id;
-  // When the list is grouped per colour, `id` is the variant id; use productId
-  // for navigation to the product, and colour is that row's colour.
-  final String? productId;
-  final String? colour;
   final String name;
   final String productCode;
   final String status; // active | inactive | draft
@@ -34,8 +28,6 @@ class ProductListRow {
 
   factory ProductListRow.fromJson(Map<String, dynamic> j) => ProductListRow(
         id: j['id'] as String,
-        productId: j['productId'] as String?,
-        colour: j['colour'] as String?,
         name: j['name'] as String,
         productCode: (j['productCode'] ?? '—') as String,
         status: (j['status'] ?? 'draft') as String,

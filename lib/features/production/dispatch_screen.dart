@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/async_view.dart';
+import '../../widgets/picker_field.dart';
 import '../../widgets/theme_button.dart';
 import 'continuous_scanner.dart';
 import 'production_providers.dart';
@@ -100,12 +101,12 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
           vendors.when(
             loading: () => const LinearProgressIndicator(),
             error: (e, _) => Text('$e', style: TextStyle(color: context.p.danger)),
-            data: (list) => DropdownButtonFormField<String>(
-              initialValue: _vendorId,
-              decoration: const InputDecoration(labelText: 'Vendor', hintText: 'Pick a vendor'),
-              items: [
-                for (final v in list)
-                  DropdownMenuItem(value: (v as Map)['id'] as String, child: Text('${v['name']}')),
+            data: (list) => PickerField(
+              label: 'Vendor',
+              hint: 'Pick a vendor',
+              value: _vendorId,
+              options: [
+                for (final v in list) PickerOption((v as Map)['id'] as String, '${v['name']}'),
               ],
               onChanged: (v) => setState(() => _vendorId = v),
             ),
@@ -114,12 +115,12 @@ class _DispatchScreenState extends ConsumerState<DispatchScreen> {
           stages.when(
             loading: () => const LinearProgressIndicator(),
             error: (e, _) => Text('$e', style: TextStyle(color: context.p.danger)),
-            data: (list) => DropdownButtonFormField<String>(
-              initialValue: _stageId,
-              decoration: const InputDecoration(labelText: 'Stage', hintText: 'Pick a stage'),
-              items: [
-                for (final s in list)
-                  DropdownMenuItem(value: (s as Map)['id'] as String, child: Text('${s['name']}')),
+            data: (list) => PickerField(
+              label: 'Stage',
+              hint: 'Pick a stage',
+              value: _stageId,
+              options: [
+                for (final s in list) PickerOption((s as Map)['id'] as String, '${s['name']}'),
               ],
               onChanged: (v) => setState(() => _stageId = v),
             ),

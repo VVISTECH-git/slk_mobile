@@ -5,6 +5,7 @@ import '../../models/product.dart';
 import '../../models/stock.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/async_view.dart';
+import '../../widgets/picker_field.dart';
 import 'stock_providers.dart';
 
 enum StockAction { receive, adjust, transfer }
@@ -133,23 +134,18 @@ class _StockActionFormState extends ConsumerState<_StockActionForm> {
             onSelectionChanged: (s) => setState(() => _action = s.first),
           ),
           const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            initialValue: _location,
-            decoration: InputDecoration(
-                labelText: _action == StockAction.transfer ? 'From location' : 'Location'),
-            items: widget.locations
-                .map((l) => DropdownMenuItem(value: l.id, child: Text(l.name)))
-                .toList(),
+          PickerField(
+            label: _action == StockAction.transfer ? 'From location' : 'Location',
+            value: _location,
+            options: [for (final l in widget.locations) PickerOption(l.id, l.name)],
             onChanged: (v) => setState(() => _location = v),
           ),
           if (_action == StockAction.transfer) ...[
             const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: _toLocation,
-              decoration: const InputDecoration(labelText: 'To location'),
-              items: widget.locations
-                  .map((l) => DropdownMenuItem(value: l.id, child: Text(l.name)))
-                  .toList(),
+            PickerField(
+              label: 'To location',
+              value: _toLocation,
+              options: [for (final l in widget.locations) PickerOption(l.id, l.name)],
               onChanged: (v) => setState(() => _toLocation = v),
             ),
           ],

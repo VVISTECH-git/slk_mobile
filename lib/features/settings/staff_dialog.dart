@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../widgets/picker_field.dart';
+
 /// Result of the staff add/edit dialog.
 class StaffFormResult {
   const StaffFormResult({required this.name, required this.role, this.storeId, this.pin});
@@ -32,23 +34,23 @@ Future<StaffFormResult?> showStaffDialog(
             children: [
               TextField(controller: nameC, decoration: const InputDecoration(labelText: 'Name')),
               const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: role,
-                decoration: const InputDecoration(labelText: 'Role'),
-                items: const [
-                  DropdownMenuItem(value: 'cashier', child: Text('Cashier')),
-                  DropdownMenuItem(value: 'owner', child: Text('Owner')),
+              PickerField(
+                label: 'Role',
+                value: role,
+                options: const [
+                  PickerOption('cashier', 'Cashier'),
+                  PickerOption('owner', 'Owner'),
                 ],
                 onChanged: (v) => setState(() => role = v ?? 'cashier'),
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<String?>(
-                initialValue: storeId,
-                decoration: const InputDecoration(labelText: 'Store (cashiers)'),
-                items: [
-                  const DropdownMenuItem(value: null, child: Text('No fixed store')),
-                  ...stores.map((s) => DropdownMenuItem(
-                      value: (s as Map)['id'] as String, child: Text('${s['name']}'))),
+              PickerField(
+                label: 'Store (cashiers)',
+                hint: 'No fixed store',
+                value: storeId,
+                allowClear: true,
+                options: [
+                  for (final s in stores) PickerOption((s as Map)['id'] as String, '${s['name']}'),
                 ],
                 onChanged: (v) => setState(() => storeId = v),
               ),

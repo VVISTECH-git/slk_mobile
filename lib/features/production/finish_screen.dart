@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/async_view.dart';
+import '../../widgets/picker_field.dart';
 import '../../widgets/theme_button.dart';
 import 'continuous_scanner.dart';
 import 'production_providers.dart';
@@ -79,16 +80,12 @@ class _FinishScreenState extends ConsumerState<FinishScreen> {
           variants.when(
             loading: () => const LinearProgressIndicator(),
             error: (e, _) => Text('$e', style: TextStyle(color: context.p.danger)),
-            data: (list) => DropdownButtonFormField<String>(
-              initialValue: _variantId,
-              isExpanded: true,
-              decoration: const InputDecoration(labelText: 'Finished as (product / variant)'),
-              items: [
+            data: (list) => PickerField(
+              label: 'Finished as (product / variant)',
+              value: _variantId,
+              options: [
                 for (final v in list)
-                  DropdownMenuItem(
-                    value: (v as Map)['id'] as String,
-                    child: Text('${v['productName']} · ${v['label']}', overflow: TextOverflow.ellipsis),
-                  ),
+                  PickerOption((v as Map)['id'] as String, '${v['productName']} · ${v['label']}'),
               ],
               onChanged: (v) => setState(() => _variantId = v),
             ),

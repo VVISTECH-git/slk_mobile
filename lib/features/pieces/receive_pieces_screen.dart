@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/theme_button.dart';
 import '../../widgets/async_view.dart';
+import '../../widgets/picker_field.dart';
 import '../transfers/transfer_providers.dart';
 import 'piece_providers.dart';
 import 'scan_collector.dart';
@@ -60,10 +61,15 @@ class _ReceivePiecesScreenState extends ConsumerState<ReceivePiecesScreen> {
           Row(children: [
             Text('Missing reason:', style: TextStyle(color: context.p.textSecondary)),
             const SizedBox(width: 10),
-            DropdownButton<String>(
-              value: _reason,
-              items: [for (final r in _reasons) DropdownMenuItem(value: r, child: Text(r[0].toUpperCase() + r.substring(1)))],
-              onChanged: (v) => setState(() => _reason = v ?? 'lost'),
+            Expanded(
+              child: PickerField(
+                label: 'Reason',
+                value: _reason,
+                options: [
+                  for (final r in _reasons) PickerOption(r, r[0].toUpperCase() + r.substring(1)),
+                ],
+                onChanged: (v) => setState(() => _reason = v ?? 'lost'),
+              ),
             ),
           ]),
           const SizedBox(height: 8),
