@@ -30,6 +30,9 @@ class CategoryRow {
     this.unitType,
     this.hsnCode,
     this.gstRate,
+    this.costPrice,
+    this.b2cPrice,
+    this.b2bPrice,
   });
 
   final String id;
@@ -50,6 +53,9 @@ class CategoryRow {
   final String? unitType;
   final String? hsnCode;
   final String? gstRate;
+  final String? costPrice;
+  final String? b2cPrice;
+  final String? b2bPrice;
 
   factory CategoryRow.fromJson(Map<String, dynamic> j) => CategoryRow(
         id: j['id'] as String,
@@ -70,6 +76,9 @@ class CategoryRow {
         unitType: j['unitType'] as String?,
         hsnCode: j['hsnCode'] as String?,
         gstRate: j['gstRate']?.toString(),
+        costPrice: j['costPrice']?.toString(),
+        b2cPrice: j['b2cPrice']?.toString(),
+        b2bPrice: j['b2bPrice']?.toString(),
       );
 }
 

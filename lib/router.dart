@@ -16,6 +16,8 @@ import 'features/category/category_form_screen.dart';
 import 'features/stock/stock_screen.dart';
 import 'features/stock/movements_screen.dart';
 import 'features/pieces/scan_identify_screen.dart';
+import 'features/pieces/piece_detail_screen.dart';
+import 'features/pieces/tag_pieces_screen.dart';
 import 'features/pieces/goods_in_screen.dart';
 import 'features/pieces/dispatch_pieces_screen.dart';
 import 'features/pieces/receive_pieces_screen.dart';
@@ -122,7 +124,12 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Serialized pieces (unique QR per unit)
       GoRoute(path: '/scan', builder: (_, _) => const ScanIdentifyScreen()),
+      GoRoute(
+        path: '/piece/:tag',
+        builder: (_, state) => PieceDetailScreen(tag: state.pathParameters['tag']!),
+      ),
       GoRoute(path: '/goods-in', builder: (_, _) => const GoodsInScreen()),
+      GoRoute(path: '/tag', builder: (_, _) => const TagPiecesScreen()),
       GoRoute(path: '/pieces/dispatch', builder: (_, _) => const DispatchPiecesScreen()),
       GoRoute(path: '/pieces/sell', builder: (_, _) => const ScanSaleScreen()),
       GoRoute(

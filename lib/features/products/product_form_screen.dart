@@ -446,43 +446,18 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               ),
               const SizedBox(height: 20),
 
-              _section('Tax'),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _hsn,
-                      decoration: const InputDecoration(labelText: 'HSN code'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextField(
-                      controller: _gst,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(labelText: 'GST %'),
-                    ),
-                  ),
-                ],
-              ),
+              _section('Details'),
+              _inheritedCard(context, cats, l),
               const SizedBox(height: 12),
 
-              // Optional attributes
+              // Optional, product-specific
               _DetailsSection(
                 expanded: _showDetails,
                 onToggle: () => setState(() => _showDetails = !_showDetails),
-                child: Column(
-                  children: [
-                    TextField(controller: _description, maxLines: 2, decoration: const InputDecoration(labelText: 'Description')),
-                    const SizedBox(height: 12),
-                    _attrDropdown('Fabric', l['fabrics'], _fabricId, (v) => setState(() => _fabricId = v)),
-                    const SizedBox(height: 12),
-                    _attrDropdown('Technique', l['techniques'], _techniqueId, (v) => setState(() => _techniqueId = v)),
-                    const SizedBox(height: 12),
-                    _attrDropdown('Dye type', l['dyeTypes'], _dyeId, (v) => setState(() => _dyeId = v)),
-                    const SizedBox(height: 12),
-                    _attrDropdown('Border style', l['borderStyles'], _borderId, (v) => setState(() => _borderId = v)),
-                  ],
+                child: TextField(
+                  controller: _description,
+                  maxLines: 2,
+                  decoration: const InputDecoration(labelText: 'Description'),
                 ),
               ),
               const SizedBox(height: 20),
@@ -572,14 +547,93 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     );
   }
 
-  Widget _attrDropdown(String label, dynamic rows, String? value, ValueChanged<String?> onChanged) {
-    final list = (rows as List?) ?? [];
-    return PickerField(
-      label: label,
-      value: value,
-      allowClear: true,
-      options: [for (final r in list) PickerOption((r as Map)['id'] as String, '${r['name']}')],
-      onChanged: onChanged,
+  // Effective template attrs for the selected category, resolved by walking up
+  // the parent chain (nearest ancestor that sets a value wins). Mirrors the
+  // server's inheritance so the form previews exactly what will be saved.
+  Map<String, String?> _effectiveCatAttrs(List cats) {
+    final byId = <String, Map>{for (final c in cats) (c as Map)['id'] as String: c};
+    String? pick(String key) {
+      var cur = _categoryId;
+      final seen = <String>{};
+      while (cur != null && byId.containsKey(cur) && !seen.contains(cur)) {
+        seen.add(cur);
+        final c = byId[cur]!;
+        final v = c[key];
+        if (v != null && '$v'.trim().isNotEmpty) return '$v';
+        cur = c['parentId'] as String?;
+      }
+      return null;
+    }
+
+    return {
+      'fabricId': pick('fabricId'),
+      'techniqueId': pick('techniqueId'),
+      'dyeTypeId': pick('dyeTypeId'),
+      'borderStyleId': pick('borderStyleId'),
+      'hsnCode': pick('hsnCode'),
+      'gstRate': pick('gstRate'),
+    };
+  }
+
+  String _nameFor(dynamic rows, String? id) {
+    if (id == null) return '—';
+    for (final r in (rows as List? ?? [])) {
+      if ((r as Map)['id'] == id) return '${r['name']}';
+    }
+    return '—';
+  }
+
+  Widget _inheritedCard(BuildContext context, List cats, Map l) {
+    final box = BoxDecoration(
+      color: context.p.surface2,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: context.p.border),
+    );
+    if (_categoryId == null) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: box,
+        child: Text('Pick a category — fabric, technique, HSN and GST come from it.',
+            style: TextStyle(color: context.p.textMuted)),
+      );
+    }
+    final a = _effectiveCatAttrs(cats);
+    final rows = <List<String>>[
+      ['Fabric', _nameFor(l['fabrics'], a['fabricId'])],
+      ['Technique', _nameFor(l['techniques'], a['techniqueId'])],
+      ['Dye type', _nameFor(l['dyeTypes'], a['dyeTypeId'])],
+      ['Border style', _nameFor(l['borderStyles'], a['borderStyleId'])],
+      ['HSN code', a['hsnCode'] ?? '—'],
+      ['GST %', a['gstRate'] != null ? '${a['gstRate']}%' : '—'],
+    ];
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: box,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(Icons.category_outlined, size: 16, color: context.p.textSecondary),
+            const SizedBox(width: 6),
+            Text('From category',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.p.textSecondary)),
+          ]),
+          const SizedBox(height: 10),
+          for (final r in rows)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(r[0], style: TextStyle(color: context.p.textSecondary)),
+                  Flexible(
+                      child: Text(r[1],
+                          textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.w600))),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

@@ -20,7 +20,7 @@ class _Module {
 const _modules = [
   _Module('Category', Icons.category_outlined, '/category'),
   _Module('Products', Icons.inventory_2_outlined, '/products'),
-  _Module('Receive stock', Icons.qr_code_2, '/goods-in', ownerOnly: true),
+  _Module('Tag pieces', Icons.qr_code_2, '/tag', ownerOnly: true),
   _Module('Identify item', Icons.qr_code_scanner, '/scan'),
   _Module('Sell (scan)', Icons.point_of_sale, '/pieces/sell'),
   // _Module('Point of Sale', Icons.point_of_sale, '/pos'),

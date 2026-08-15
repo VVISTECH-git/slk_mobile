@@ -41,6 +41,27 @@ class PieceRepository {
     return ((map['codes'] as List?) ?? []).cast<String>();
   }
 
+  /// Tag N pieces for a CATEGORY (design) in a colour → returns the minted codes.
+  Future<List<String>> tagForCategory({
+    required String categoryId,
+    required String colour,
+    required int count,
+    required String locationId,
+    String? priceOverride,
+    String? note,
+  }) async {
+    final data = await ref.read(apiClientProvider).post('/pieces/tag', body: {
+      'categoryId': categoryId,
+      'colour': colour,
+      'count': count,
+      'locationId': locationId,
+      if (priceOverride != null && priceOverride.trim().isNotEmpty) 'priceOverride': priceOverride.trim(),
+      if (note != null && note.isNotEmpty) 'note': note,
+    });
+    final map = (data as Map).cast<String, dynamic>();
+    return ((map['codes'] as List?) ?? []).cast<String>();
+  }
+
   /// Dispatch scanned pieces to a location → returns the new transfer order id.
   Future<String> dispatch({required List<String> codes, required String toLocationId, String? note}) async {
     final data = await ref.read(apiClientProvider).post('/pieces/dispatch', body: {

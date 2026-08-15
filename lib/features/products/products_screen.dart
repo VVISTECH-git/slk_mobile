@@ -97,13 +97,13 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          await context.push('/products/new');
+          await context.push('/tag');
           _reset();
         },
         backgroundColor: context.p.primary,
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('New design'),
+        icon: const Icon(Icons.qr_code_2),
+        label: const Text('Tag pieces'),
       ),
       body: Column(
         children: [
@@ -189,7 +189,7 @@ class _PieceCard extends StatelessWidget {
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        onTap: () => context.push('/products/${row.productId}'),
+        onTap: () => context.push('/piece/${Uri.encodeComponent(row.tagCode)}'),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(

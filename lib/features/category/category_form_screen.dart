@@ -54,6 +54,9 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
   final _code = TextEditingController();
   final _hsn = TextEditingController();
   final _gst = TextEditingController();
+  final _cost = TextEditingController();
+  final _retail = TextEditingController();
+  final _b2b = TextEditingController();
 
   String? _parentId;
   String? _fabricId;
@@ -79,6 +82,9 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
     _code.dispose();
     _hsn.dispose();
     _gst.dispose();
+    _cost.dispose();
+    _retail.dispose();
+    _b2b.dispose();
     super.dispose();
   }
 
@@ -89,6 +95,9 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
     _code.text = row.code ?? '';
     _hsn.text = row.hsnCode ?? '';
     _gst.text = _trimNum(row.gstRate);
+    _cost.text = _trimNum(row.costPrice);
+    _retail.text = _trimNum(row.b2cPrice);
+    _b2b.text = _trimNum(row.b2bPrice);
     _parentId = row.parentId;
     _fabricId = row.fabricId;
     _techniqueId = row.techniqueId;
@@ -121,6 +130,9 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
       'unitType': _unit,
       'hsnCode': _hsn.text.trim().isEmpty ? null : _hsn.text.trim(),
       'gstRate': _gst.text.trim().isEmpty ? null : _gst.text.trim(),
+      'costPrice': _cost.text.trim().isEmpty ? null : _cost.text.trim(),
+      'b2cPrice': _retail.text.trim().isEmpty ? null : _retail.text.trim(),
+      'b2bPrice': _b2b.text.trim().isEmpty ? null : _b2b.text.trim(),
     };
     try {
       if (widget.isEdit) {
@@ -387,6 +399,44 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
                     if (d == null || d < 0 || d > 99) return 'Enter 0–99';
                     return null;
                   },
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 22),
+          _sectionLabel('Default price'),
+          Text(
+            'The design price. Each colour can override it when tagging pieces.',
+            style: TextStyle(fontSize: 12, color: context.p.textSecondary),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _cost,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+                  decoration: const InputDecoration(labelText: 'Cost', prefixText: '₹ '),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextFormField(
+                  controller: _retail,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+                  decoration: const InputDecoration(labelText: 'Retail (MRP)', prefixText: '₹ '),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextFormField(
+                  controller: _b2b,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+                  decoration: const InputDecoration(labelText: 'B2B', prefixText: '₹ '),
                 ),
               ),
             ],
