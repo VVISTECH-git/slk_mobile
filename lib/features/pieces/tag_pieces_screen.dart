@@ -6,6 +6,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/async_view.dart';
 import '../../widgets/picker_field.dart';
 import '../../widgets/theme_button.dart';
+import '../category/category_providers.dart';
 import '../products/product_providers.dart';
 import 'piece_labels_pdf.dart';
 import 'piece_providers.dart';
@@ -34,6 +35,7 @@ class _TagPiecesScreenState extends ConsumerState<TagPiecesScreen> {
   final _price = TextEditingController();
   bool _priceTouched = false;
   bool _saving = false;
+  Map<String, String> _designColourPrice = {}; // colour(lower) -> price defined on the design
   List<String> _lastCodes = [];
   String _lastDesign = '';
   String _lastColour = '';
@@ -64,10 +66,14 @@ class _TagPiecesScreenState extends ConsumerState<TagPiecesScreen> {
                 hint: 'Pick a design',
                 value: _categoryId,
                 options: _categoryOptions(cats),
-                onChanged: (v) => setState(() {
-                  _categoryId = v;
-                  if (!_priceTouched) _price.text = _defaultRetail(cats) ?? '';
-                }),
+                onChanged: (v) {
+                  setState(() {
+                    _categoryId = v;
+                    _designColourPrice = {};
+                    if (!_priceTouched) _price.text = _defaultRetail(cats) ?? '';
+                  });
+                  _loadDesignColours(v);
+                },
               ),
               const SizedBox(height: 12),
               if (_categoryId != null) _fromCategory(context, cats),
@@ -77,7 +83,14 @@ class _TagPiecesScreenState extends ConsumerState<TagPiecesScreen> {
                 hint: 'Choose a colour',
                 value: _colour,
                 options: colourOptions(_colours),
-                onChanged: (v) => setState(() => _colour = v),
+                onChanged: (v) => setState(() {
+                  _colour = v;
+                  // If this colour has a price defined on the design, use it.
+                  if (!_priceTouched && v != null) {
+                    final p = _designColourPrice[v.toLowerCase()];
+                    if (p != null && p.isNotEmpty) _price.text = p;
+                  }
+                }),
               ),
               const SizedBox(height: 12),
               Row(
@@ -183,6 +196,25 @@ class _TagPiecesScreenState extends ConsumerState<TagPiecesScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _loadDesignColours(String? id) async {
+    if (id == null) return;
+    try {
+      final rows = await ref.read(categoryRepositoryProvider).getColours(id);
+      if (!mounted) return;
+      setState(() {
+        _designColourPrice = {
+          for (final r in rows)
+            '${r['colour']}'.toLowerCase(): (r['b2cPrice']?.toString() ?? ''),
+        };
+        // If a colour is already chosen, apply its design price.
+        if (!_priceTouched && _colour != null) {
+          final p = _designColourPrice[_colour!.toLowerCase()];
+          if (p != null && p.isNotEmpty) _price.text = p;
+        }
+      });
+    } catch (_) {/* non-fatal — price just falls back to the design default */}
   }
 
   Map _catById(List cats, String? id) {

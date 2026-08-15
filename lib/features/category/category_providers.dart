@@ -17,6 +17,7 @@ class CategoryRow {
     required this.productCount,
     required this.status,
     this.code,
+    this.ownCode,
     this.parentId,
     this.parentName,
     this.fabricId,
@@ -40,6 +41,7 @@ class CategoryRow {
   final int productCount;
   final String status;
   final String? code;
+  final String? ownCode;
   final String? parentId;
   final String? parentName;
   final String? fabricId;
@@ -63,6 +65,7 @@ class CategoryRow {
         productCount: (j['productCount'] as num?)?.toInt() ?? 0,
         status: (j['status'] ?? 'active') as String,
         code: j['code'] as String?,
+        ownCode: j['ownCode'] as String?,
         parentId: j['parentId'] as String?,
         parentName: j['parentName'] as String?,
         fabricId: j['fabricId'] as String?,
@@ -158,5 +161,16 @@ class CategoryRepository {
 
   Future<void> delete(String id) async {
     await ref.read(apiClientProvider).delete('/settings/categories/$id');
+  }
+
+  /// Colours defined on a design (with per-colour prices + piece counts).
+  Future<List<Map<String, dynamic>>> getColours(String id) async {
+    final data = await ref.read(apiClientProvider).get('/categories/$id/colours');
+    return ((data as List?) ?? []).map((e) => (e as Map).cast<String, dynamic>()).toList();
+  }
+
+  /// Replace the design's colour set (create/update/remove).
+  Future<void> saveColours(String id, List<Map<String, dynamic>> colours) async {
+    await ref.read(apiClientProvider).put('/categories/$id/colours', body: {'colours': colours});
   }
 }

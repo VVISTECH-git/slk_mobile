@@ -33,6 +33,20 @@ String _deriveCode(String name) {
 
 const _units = ['piece', 'set', 'meter'];
 
+const _sareeColours = <String>[
+  'Red', 'Maroon', 'Rani Pink', 'Pink', 'Peach', 'Orange', 'Rust', 'Mustard',
+  'Yellow', 'Gold', 'Cream', 'Off White', 'White', 'Beige', 'Brown', 'Coffee',
+  'Green', 'Mehendi', 'Teal', 'Sea Green', 'Blue', 'Sky Blue', 'Navy', 'Indigo', 'Purple',
+];
+
+/// One colour row in the Design's Colours section.
+class _ColourRow {
+  _ColourRow({required this.colour, required this.price, required this.pieceCount});
+  final String colour;
+  final TextEditingController price;
+  final int pieceCount;
+}
+
 class CategoryFormScreen extends ConsumerStatefulWidget {
   const CategoryFormScreen({super.key, this.categoryId, this.initialParentId});
 
@@ -52,7 +66,6 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _code = TextEditingController();
-  bool _codeEdited = false; // once the user edits the code, stop auto-suggesting
   final _hsn = TextEditingController();
   final _gst = TextEditingController();
   final _cost = TextEditingController();
@@ -71,10 +84,34 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
   bool _parentDefaulted = false;
   bool _saving = false;
 
+  // Colours defined on this design (edit mode).
+  final List<_ColourRow> _colourRows = [];
+  bool _coloursLoaded = false;
+
   @override
   void initState() {
     super.initState();
     _name.addListener(() => setState(() {})); // live code preview
+    if (widget.isEdit) _loadColours();
+  }
+
+  Future<void> _loadColours() async {
+    try {
+      final rows = await ref.read(categoryRepositoryProvider).getColours(widget.categoryId!);
+      if (!mounted) return;
+      setState(() {
+        _colourRows
+          ..clear()
+          ..addAll(rows.map((r) => _ColourRow(
+                colour: '${r['colour']}',
+                price: TextEditingController(text: _trimNum(r['b2cPrice']?.toString())),
+                pieceCount: (r['pieceCount'] as num?)?.toInt() ?? 0,
+              )));
+        _coloursLoaded = true;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _coloursLoaded = true);
+    }
   }
 
   @override
@@ -86,6 +123,9 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
     _cost.dispose();
     _retail.dispose();
     _b2b.dispose();
+    for (final r in _colourRows) {
+      r.price.dispose();
+    }
     super.dispose();
   }
 
@@ -93,7 +133,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
   void _seed(CategoryRow row) {
     if (_initialized) return;
     _name.text = row.name;
-    _code.text = row.code ?? '';
+    _code.text = row.ownCode ?? ''; // own code only; blank = inherits from the line
     _hsn.text = row.hsnCode ?? '';
     _gst.text = _trimNum(row.gstRate);
     _cost.text = _trimNum(row.costPrice);
@@ -135,10 +175,17 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
       'b2cPrice': _retail.text.trim().isEmpty ? null : _retail.text.trim(),
       'b2bPrice': _b2b.text.trim().isEmpty ? null : _b2b.text.trim(),
     };
-    if (_code.text.trim().isNotEmpty) body['code'] = _code.text.trim();
+    body['code'] = _code.text.trim(); // blank = inherit from the parent line
     try {
       if (widget.isEdit) {
         await repo.update(widget.categoryId!, body);
+        await repo.saveColours(widget.categoryId!, [
+          for (final r in _colourRows)
+            {
+              'colour': r.colour,
+              'b2cPrice': r.price.text.trim().isEmpty ? null : r.price.text.trim(),
+            },
+        ]);
       } else {
         await repo.create(body);
       }
@@ -262,10 +309,23 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
     );
   }
 
+  // The code a blank design would inherit: the parent line's resolved code, else
+  // derived from the name.
+  String _inheritedCode() {
+    final all = ref.read(categoriesProvider).valueOrNull ?? const <CategoryRow>[];
+    if (_parentId != null) {
+      for (final c in all) {
+        if (c.id == _parentId) {
+          return (c.code ?? '').isNotEmpty ? c.code!.toUpperCase() : _deriveCode(_name.text);
+        }
+      }
+    }
+    return _deriveCode(_name.text);
+  }
+
   Widget _form(CategoryLookups lookups) {
-    final codePreview = _code.text.trim().isNotEmpty
-        ? _code.text.trim().toUpperCase()
-        : _deriveCode(_name.text);
+    final codePreview =
+        _code.text.trim().isNotEmpty ? _code.text.trim().toUpperCase() : _inheritedCode();
 
     return Form(
       key: _formKey,
@@ -297,14 +357,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
             textCapitalization: TextCapitalization.words,
             decoration: const InputDecoration(labelText: 'Design name *'),
             validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
-            onChanged: (v) {
-              // Keep the code suggestion following the name until the user edits it.
-              if (!_codeEdited && !widget.isEdit) {
-                setState(() => _code.text = _deriveCode(v));
-              } else {
-                setState(() {});
-              }
-            },
+            onChanged: (_) => setState(() {}), // refresh the SKU preview
           ),
           const SizedBox(height: 12),
           TextFormField(
@@ -315,12 +368,11 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
               LengthLimitingTextInputFormatter(6),
             ],
             decoration: InputDecoration(
-              labelText: widget.isEdit ? 'Code override' : 'Code (SKU prefix)',
-              helperText: widget.isEdit
-                  ? 'A–Z / 0–9, max 6. Only affects products numbered after this change.'
-                  : 'A–Z / 0–9, max 6. Auto-suggested from the name — edit if you like.',
+              labelText: 'Code override (optional)',
+              helperText: 'Leave blank to inherit the line\'s code (${_inheritedCode()}). '
+                  'A–Z / 0–9, max 6.',
             ),
-            onChanged: (_) => setState(() => _codeEdited = true),
+            onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 8),
           Row(
@@ -454,6 +506,32 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
 
           if (widget.isEdit) ...[
             const SizedBox(height: 22),
+            Row(
+              children: [
+                _sectionLabel('Colours'),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: _addColour,
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Add colour'),
+                ),
+              ],
+            ),
+            Text(
+              'The colours this design comes in. Set a price per colour (blank = uses the design price). '
+              'Tagging picks from these; a brand-new colour still auto-adds.',
+              style: TextStyle(fontSize: 12, color: context.p.textSecondary),
+            ),
+            const SizedBox(height: 10),
+            if (!_coloursLoaded)
+              const Padding(padding: EdgeInsets.all(8), child: LinearProgressIndicator())
+            else if (_colourRows.isEmpty)
+              Text('No colours yet. Tap “Add colour”.',
+                  style: TextStyle(color: context.p.textMuted))
+            else
+              for (final row in _colourRows) _colourTile(row),
+
+            const SizedBox(height: 22),
             _sectionLabel('Photos'),
             Text(
               'Capture reference shots for this design (Front, Pallu, Border…) so every '
@@ -535,6 +613,98 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
 
   List<PickerOption> _refItems(List<NamedRef> refs) =>
       [for (final r in refs) PickerOption(r.id, r.name)];
+
+  Widget _colourTile(_ColourRow row) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 18,
+            height: 18,
+            decoration: BoxDecoration(
+              color: colourSwatch(row.colour),
+              shape: BoxShape.circle,
+              border: Border.all(color: context.p.border),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(row.colour, style: const TextStyle(fontWeight: FontWeight.w600)),
+          ),
+          SizedBox(
+            width: 120,
+            child: TextField(
+              controller: row.price,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+              decoration: const InputDecoration(labelText: 'Price', prefixText: '₹ ', isDense: true),
+            ),
+          ),
+          IconButton(
+            tooltip: row.pieceCount > 0 ? '${row.pieceCount} pieces — can\'t remove' : 'Remove',
+            onPressed: row.pieceCount > 0
+                ? null
+                : () => setState(() {
+                      row.price.dispose();
+                      _colourRows.remove(row);
+                    }),
+            icon: Icon(Icons.close, size: 18, color: context.p.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _addColour() async {
+    final taken = _colourRows.map((r) => r.colour.toLowerCase()).toSet();
+    final available = _sareeColours.where((c) => !taken.contains(c.toLowerCase())).toList();
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.p.surface2,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('Add a colour', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+            ),
+            const Divider(height: 1),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  for (final c in available)
+                    ListTile(
+                      leading: Container(
+                        width: 22,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          color: colourSwatch(c),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: context.p.border),
+                        ),
+                      ),
+                      title: Text(c),
+                      onTap: () => Navigator.pop(context, c),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (picked != null) {
+      setState(() => _colourRows.add(_ColourRow(colour: picked, price: TextEditingController(), pieceCount: 0)));
+    }
+  }
 
   Widget _sectionLabel(String text) => Padding(
         padding: const EdgeInsets.only(bottom: 8),
