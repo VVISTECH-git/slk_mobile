@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/picker_field.dart';
 import '../../widgets/theme_button.dart';
+import 'piece_labels_pdf.dart';
 import 'piece_providers.dart';
 
 /// Detail of a SINGLE piece (one QR tag): its design, colour, location and
@@ -73,6 +75,47 @@ class _PieceDetailScreenState extends ConsumerState<PieceDetailScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        // Scannable QR for this piece.
+        Center(
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: context.p.border),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                QrImageView(
+                  data: '${p['tagCode']}',
+                  version: QrVersions.auto,
+                  size: 180,
+                  gapless: false,
+                ),
+                const SizedBox(height: 8),
+                Text('${p['tagCode']}',
+                    style: const TextStyle(fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        FilledButton.icon(
+          onPressed: () => printPieceLabels(
+            codes: ['${p['tagCode']}'],
+            productName: '${p['productName']}',
+            variantLabel: (colour.isEmpty ? null : colour),
+          ),
+          icon: const Icon(Icons.print_outlined),
+          label: const Text('Print / share QR tag'),
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(48),
+            backgroundColor: context.p.primary,
+            foregroundColor: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 14),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(18),

@@ -52,6 +52,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _code = TextEditingController();
+  bool _codeEdited = false; // once the user edits the code, stop auto-suggesting
   final _hsn = TextEditingController();
   final _gst = TextEditingController();
   final _cost = TextEditingController();
@@ -134,9 +135,9 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
       'b2cPrice': _retail.text.trim().isEmpty ? null : _retail.text.trim(),
       'b2bPrice': _b2b.text.trim().isEmpty ? null : _b2b.text.trim(),
     };
+    if (_code.text.trim().isNotEmpty) body['code'] = _code.text.trim();
     try {
       if (widget.isEdit) {
-        if (_code.text.trim().isNotEmpty) body['code'] = _code.text.trim();
         await repo.update(widget.categoryId!, body);
       } else {
         await repo.create(body);
@@ -296,33 +297,42 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
             textCapitalization: TextCapitalization.words,
             decoration: const InputDecoration(labelText: 'Category name *'),
             validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+            onChanged: (v) {
+              // Keep the code suggestion following the name until the user edits it.
+              if (!_codeEdited && !widget.isEdit) {
+                setState(() => _code.text = _deriveCode(v));
+              } else {
+                setState(() {});
+              }
+            },
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _code,
+            textCapitalization: TextCapitalization.characters,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+              LengthLimitingTextInputFormatter(6),
+            ],
+            decoration: InputDecoration(
+              labelText: widget.isEdit ? 'Code override' : 'Code (SKU prefix)',
+              helperText: widget.isEdit
+                  ? 'A–Z / 0–9, max 6. Only affects products numbered after this change.'
+                  : 'A–Z / 0–9, max 6. Auto-suggested from the name — edit if you like.',
+            ),
+            onChanged: (_) => setState(() => _codeEdited = true),
           ),
           const SizedBox(height: 8),
           Row(
             children: [
               Icon(Icons.qr_code_2, size: 16, color: context.p.textSecondary),
               const SizedBox(width: 6),
-              Text('SKU prefix: ', style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
-              Text(codePreview,
+              Text('SKU will look like: ', style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
+              Text('SLK-$codePreview-####',
                   style: TextStyle(
                       fontSize: 12, fontWeight: FontWeight.w700, color: context.p.primaryDark)),
             ],
           ),
-          if (widget.isEdit) ...[
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _code,
-              textCapitalization: TextCapitalization.characters,
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
-                LengthLimitingTextInputFormatter(6),
-              ],
-              decoration: const InputDecoration(
-                labelText: 'Code override',
-                helperText: 'A–Z / 0–9, max 6. Only affects products numbered after this change.',
-              ),
-            ),
-          ],
 
           const SizedBox(height: 22),
           _sectionLabel('Default attributes'),

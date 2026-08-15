@@ -7,6 +7,7 @@ import '../../widgets/async_view.dart';
 import '../../widgets/picker_field.dart';
 import '../../widgets/theme_button.dart';
 import '../products/product_providers.dart';
+import 'piece_labels_pdf.dart';
 import 'piece_providers.dart';
 
 /// Two-module "create products": pick a Category (design) + colour + quantity →
@@ -33,6 +34,9 @@ class _TagPiecesScreenState extends ConsumerState<TagPiecesScreen> {
   final _price = TextEditingController();
   bool _priceTouched = false;
   bool _saving = false;
+  List<String> _lastCodes = [];
+  String _lastDesign = '';
+  String _lastColour = '';
 
   @override
   void dispose() {
@@ -122,6 +126,58 @@ class _TagPiecesScreenState extends ConsumerState<TagPiecesScreen> {
                   foregroundColor: Colors.white,
                 ),
               ),
+              if (_lastCodes.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: context.p.success.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: context.p.success.withValues(alpha: 0.4)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(children: [
+                        Icon(Icons.check_circle, color: context.p.success, size: 18),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text('Tagged ${_lastCodes.length} piece(s)',
+                              style: const TextStyle(fontWeight: FontWeight.w700)),
+                        ),
+                      ]),
+                      const SizedBox(height: 4),
+                      Text('${_lastCodes.first}${_lastCodes.length > 1 ? '  …  ${_lastCodes.last}' : ''}',
+                          style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: FilledButton.icon(
+                              onPressed: () => printPieceLabels(
+                                codes: _lastCodes,
+                                productName: _lastDesign,
+                                variantLabel: _lastColour,
+                              ),
+                              icon: const Icon(Icons.print_outlined),
+                              label: const Text('Print QR tags'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: context.p.primary,
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          OutlinedButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: const Text('Done'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           );
         },
@@ -223,10 +279,15 @@ class _TagPiecesScreenState extends ConsumerState<TagPiecesScreen> {
             priceOverride: _price.text,
           );
       if (!mounted) return;
+      final design = _catById(cats, _categoryId)['name']?.toString() ?? 'Design';
+      setState(() {
+        _lastCodes = codes;
+        _lastDesign = design;
+        _lastColour = _colour ?? '';
+      });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Tagged ${codes.length} piece(s): ${codes.first}${codes.length > 1 ? ' …' : ''}')),
+        SnackBar(content: Text('Tagged ${codes.length} piece(s). Print the QR tags below.')),
       );
-      Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) _err('$e');
     } finally {
