@@ -60,7 +60,7 @@ class _TagPiecesScreenState extends ConsumerState<TagPiecesScreen> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
             children: [
               PickerField(
-                label: 'Category (design) *',
+                label: 'Design *',
                 hint: 'Pick a design',
                 value: _categoryId,
                 options: _categoryOptions(cats),
@@ -231,7 +231,7 @@ class _TagPiecesScreenState extends ConsumerState<TagPiecesScreen> {
                 if (price != null) 'Design price ₹$price',
                 ...bits,
               ].join('  ·  ').isEmpty
-                  ? 'Details come from this category.'
+                  ? 'Details come from this design.'
                   : [if (price != null) 'Design price ₹$price', ...bits].join('  ·  '),
               style: TextStyle(fontSize: 12, color: context.p.textSecondary),
             ),
@@ -264,7 +264,7 @@ class _TagPiecesScreenState extends ConsumerState<TagPiecesScreen> {
 
   Future<void> _tag(List cats) async {
     final qty = int.tryParse(_qty.text.trim()) ?? 0;
-    if (_categoryId == null) return _err('Pick a category (design).');
+    if (_categoryId == null) return _err('Pick a design.');
     if (_colour == null) return _err('Choose a colour.');
     if (qty <= 0) return _err('Enter a quantity.');
     if (_locationId == null) return _err('Pick a location.');

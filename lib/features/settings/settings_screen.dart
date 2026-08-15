@@ -143,8 +143,8 @@ class SettingsScreen extends ConsumerWidget {
               const SizedBox(height: 20),
 
               // ---- Categories ----
-              _SectionHeader('Categories & codes', onAdd: () async {
-                final name = await _promptName(context, 'New category');
+              _SectionHeader('Designs & codes', onAdd: () async {
+                final name = await _promptName(context, 'New design');
                 if (name != null && name.isNotEmpty) {
                   await _guard(context, ref, () => _repo(ref).addCategory(name, null));
                 }

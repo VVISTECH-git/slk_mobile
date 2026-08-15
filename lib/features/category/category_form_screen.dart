@@ -144,7 +144,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(widget.isEdit ? 'Category updated' : 'Category created')),
+        SnackBar(content: Text(widget.isEdit ? 'Design updated' : 'Design created')),
       );
       context.pop();
     } catch (e) {
@@ -160,9 +160,9 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Delete category?'),
+        title: const Text('Delete design?'),
         content: Text('“${_name.text.trim()}” will be removed. This can\'t be undone.\n\n'
-            'Categories that still have products or sub-categories can\'t be deleted.'),
+            'Designs that still have products or sub-designs can\'t be deleted.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           FilledButton(
@@ -178,7 +178,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
     try {
       await ref.read(categoryRepositoryProvider).delete(widget.categoryId!);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Category deleted')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Design deleted')));
       context.pop();
     } catch (e) {
       if (!mounted) return;
@@ -196,7 +196,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isEdit ? 'Edit category' : 'New category'),
+        title: Text(widget.isEdit ? 'Edit design' : 'New design'),
         actions: [
           if (widget.isEdit && isOwner)
             IconButton(
@@ -249,7 +249,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
                   }
                 }
                 if (found == null) {
-                  return const Center(child: Text('Category not found.'));
+                  return const Center(child: Text('Design not found.'));
                 }
                 _seed(found);
                 return _form(lookups);
@@ -274,7 +274,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
         children: [
           _sectionLabel('Classification'),
           _dropdown(
-            label: kCategoryFocus != null ? 'Sub-category (under $kCategoryFocus)' : 'Parent category',
+            label: kCategoryFocus != null ? 'Sub-design (under $kCategoryFocus)' : 'Parent design',
             value: _parentId,
             options: kCategoryFocus != null
                 ? [
@@ -295,7 +295,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
           TextFormField(
             controller: _name,
             textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(labelText: 'Category name *'),
+            decoration: const InputDecoration(labelText: 'Design name *'),
             validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
             onChanged: (v) {
               // Keep the code suggestion following the name until the user edits it.
@@ -336,7 +336,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
 
           const SizedBox(height: 22),
           _sectionLabel('Default attributes'),
-          Text('New products in this category inherit these.',
+          Text('Pieces in this design inherit these.',
               style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
           const SizedBox(height: 12),
           _dropdown(
@@ -456,7 +456,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
             const SizedBox(height: 22),
             _sectionLabel('Photos'),
             Text(
-              'Capture reference shots for this category (Front, Pallu, Border…) so every '
+              'Capture reference shots for this design (Front, Pallu, Border…) so every '
               'product here is photographed the same way.',
               style: TextStyle(fontSize: 12, color: context.p.textSecondary),
             ),
@@ -475,7 +475,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
           if (widget.isEdit && (ref.watch(authControllerProvider).session?.isOwner ?? false)) ...[
             const SizedBox(height: 22),
             _sectionLabel('Stock'),
-            Text('Tag finished pieces received for this category with QR codes.',
+            Text('Tag finished pieces received for this design with QR codes.',
                 style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
             const SizedBox(height: 10),
             OutlinedButton.icon(
@@ -506,7 +506,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
                 ? const SizedBox(
                     width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.check),
-            label: Text(widget.isEdit ? 'Save changes' : 'Create category'),
+            label: Text(widget.isEdit ? 'Save changes' : 'Create design'),
             style: FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(50),
               backgroundColor: context.p.primary,

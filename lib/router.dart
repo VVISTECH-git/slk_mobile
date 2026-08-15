@@ -102,7 +102,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/category/:id/photos',
         builder: (_, state) => PhotoGuideScreen(
           categoryId: state.pathParameters['id']!,
-          categoryName: (state.extra as Map?)?['name'] as String? ?? 'Category',
+          categoryName: (state.extra as Map?)?['name'] as String? ?? 'Design',
         ),
       ),
 

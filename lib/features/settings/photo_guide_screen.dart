@@ -69,7 +69,7 @@ class PhotoGuideScreen extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(4, 0, 4, 12),
                 child: Text(
-                  'A photo checklist for this category. When staff add a product here, they’ll '
+                  'A photo checklist for this design. When staff add a product here, they’ll '
                   'be asked to take each shot below — the sample image shows them how.',
                   style: TextStyle(color: context.p.textSecondary, fontSize: 13, height: 1.35),
                 ),

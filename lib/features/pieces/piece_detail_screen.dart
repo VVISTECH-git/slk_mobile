@@ -208,11 +208,11 @@ class _PieceDetailScreenState extends ConsumerState<PieceDetailScreen> {
               Row(children: [
                 Icon(Icons.category_outlined, size: 16, color: context.p.textSecondary),
                 const SizedBox(width: 6),
-                Text('Design (from category)',
+                Text('Design',
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.p.textSecondary)),
               ]),
               const SizedBox(height: 10),
-              _kv(context, 'Category', '${p['categoryName'] ?? '—'}'),
+              _kv(context, 'Design', '${p['categoryName'] ?? '—'}'),
               _kv(context, 'Colour', colour.isEmpty ? '—' : colour),
               _kv(context, 'Fabric', '${p['fabric'] ?? '—'}'),
               _kv(context, 'Technique', '${p['technique'] ?? '—'}'),

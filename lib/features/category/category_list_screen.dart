@@ -67,13 +67,13 @@ class _CategoryListScreenState extends ConsumerState<CategoryListScreen> {
   }
 
   String _titleFor(List<CategoryRow>? all) {
-    if (widget.parentId == null) return 'Category';
+    if (widget.parentId == null) return 'Design';
     if (all != null) {
       for (final c in all) {
         if (c.id == widget.parentId) return c.name;
       }
     }
-    return 'Category';
+    return 'Design';
   }
 
   @override
@@ -100,7 +100,7 @@ class _CategoryListScreenState extends ConsumerState<CategoryListScreen> {
         backgroundColor: context.p.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
-        label: const Text('New category'),
+        label: const Text('New design'),
       ),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -156,7 +156,7 @@ class _CategoryListScreenState extends ConsumerState<CategoryListScreen> {
           child: kids.isEmpty
               ? Center(
                   child: Text(
-                    _query.isEmpty ? 'Nothing here yet. Tap “New category”.' : 'No matches.',
+                    _query.isEmpty ? 'Nothing here yet. Tap “New design”.' : 'No matches.',
                     style: TextStyle(color: context.p.textSecondary),
                   ),
                 )
@@ -173,8 +173,8 @@ class _CategoryListScreenState extends ConsumerState<CategoryListScreen> {
                         return _FolderCard(
                           row: c,
                           subtitle: n.childrenAreFolders
-                              ? '${n.direct} sub-categories · ${n.leaves} categories'
-                              : '${n.leaves} categories',
+                              ? '${n.direct} groups · ${n.leaves} designs'
+                              : '${n.leaves} designs',
                           onTap: () async {
                             await context.push('/category/browse/${c.id}');
                             ref.invalidate(categoriesProvider);

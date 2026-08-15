@@ -291,7 +291,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       return;
     }
     if (_categoryId == null) {
-      showError(context, 'Pick a category.');
+      showError(context, 'Pick a design.');
       return;
     }
     final filled = _variants.where((v) => v.hasContent).toList();
@@ -408,8 +408,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               ),
               const SizedBox(height: 12),
               PickerField(
-                label: 'Category *',
-                hint: 'Pick a category',
+                label: 'Design *',
+                hint: 'Pick a design',
                 value: _categoryId,
                 options: _categoryOptions(cats),
                 onChanged: (v) => setState(() => _categoryId = v),
@@ -516,7 +516,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   Widget _photosSection() {
     if (_categoryId == null) {
-      return Text('Pick a category first to add photos.',
+      return Text('Pick a design first to add photos.',
           style: TextStyle(fontSize: 13, color: context.p.textSecondary));
     }
     final slotsAsync = ref.watch(categoryPhotoSlotsProvider(_categoryId!));
@@ -529,7 +529,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           padding: const EdgeInsets.only(bottom: 8),
           child: Text(
             slots.isEmpty
-                ? 'Photos are shared across all sizes of a colour. Tip: set a photo guide for this category in Settings to prompt specific shots.'
+                ? 'Photos are shared across all sizes of a colour. Tip: set a photo guide for this design in Settings to prompt specific shots.'
                 : 'Photos are shared across all sizes of a colour. Tap each labelled shot to capture it.',
             style: TextStyle(fontSize: 12, color: context.p.textSecondary, height: 1.35),
           ),
@@ -593,7 +593,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: box,
-        child: Text('Pick a category — fabric, technique, HSN and GST come from it.',
+        child: Text('Pick a design — fabric, technique, HSN and GST come from it.',
             style: TextStyle(color: context.p.textMuted)),
       );
     }
@@ -615,7 +615,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           Row(children: [
             Icon(Icons.category_outlined, size: 16, color: context.p.textSecondary),
             const SizedBox(width: 6),
-            Text('From category',
+            Text('From design',
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.p.textSecondary)),
           ]),
           const SizedBox(height: 10),
