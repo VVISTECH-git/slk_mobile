@@ -6,7 +6,9 @@ import '../../core/providers.dart';
 /// sub-categories only (e.g. 'Sarees'). Set to `null` to show every category.
 /// Single switch so the scope is trivially reversible.
 // ignore: unnecessary_nullable_for_final_variable_declarations
-const String? kCategoryFocus = 'Sarees';
+// No forced focus — the catalogue shows all top-level groups (Sarees, Fabric…)
+// and new groups/sub-groups/designs can be created at any level.
+const String? kCategoryFocus = null;
 
 /// One row of the Category list (`GET /categories/full`) — a (sub-)category plus
 /// its template attributes (resolved to names) and how many products use it.

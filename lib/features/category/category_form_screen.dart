@@ -299,19 +299,11 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
           ]),
         ),
         data: (lookups) {
-          // New category: default the parent to the first sub-category under the
-          // focus category (e.g. Cotton Sarees under Sarees).
+          // New: the parent is exactly where you tapped "New …" — root (null) =
+          // top-level group, inside Sarees = sub-group, inside Cotton = design.
           if (!widget.isEdit && !_parentDefaulted) {
             _parentDefaulted = true;
-            final subs = _focusSubs(lookups);
-            final init = widget.initialParentId;
-            if (init != null && subs.any((s) => s.id == init)) {
-              _parentId = init; // drilled into a specific sub-category
-            } else if (subs.isNotEmpty) {
-              _parentId = subs.first.id; // default to first sub under focus
-            } else {
-              _parentId = init; // no focus scope — use whatever was passed
-            }
+            _parentId = widget.initialParentId;
           }
 
           // In edit mode we need the existing row to seed the form.
@@ -367,21 +359,11 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
         children: [
           _sectionLabel('Classification'),
           _dropdown(
-            label: kCategoryFocus != null ? 'Parent (under $kCategoryFocus)' : 'Parent group',
+            label: 'Parent group',
             value: _parentId,
-            options: kCategoryFocus != null
-                ? [
-                    for (final c in _focusSubs(lookups).where((c) => c.id != widget.categoryId))
-                      PickerOption(c.id, c.name)
-                  ]
-                : [
-                    // Can't be its own parent.
-                    for (final c in lookups.topCategories.where((c) => c.id != widget.categoryId))
-                      PickerOption(c.id, c.name)
-                  ],
-            // Non-focus mode allowed "None (top-level)".
-            allowClear: kCategoryFocus == null,
-            hint: kCategoryFocus == null ? 'None (top-level)' : null,
+            options: _parentOptions(lookups),
+            allowClear: true,
+            hint: 'None (top-level)',
             onChanged: (v) => setState(() => _parentId = v),
           ),
           const SizedBox(height: 14),
@@ -630,19 +612,29 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
     );
   }
 
-  // Sub-categories under the focus category (e.g. the Sarees sub-categories).
-  List<NamedRef> _focusSubs(CategoryLookups lookups) {
-    if (kCategoryFocus == null) return const [];
-    String? focusId;
-    for (final c in lookups.topCategories) {
-      if (c.name == kCategoryFocus) {
-        focusId = c.id;
-        break;
+  // All categories as "A › B › C" path options, so a record can be parented
+  // anywhere in the tree. Excludes itself (can't be its own parent).
+  List<PickerOption> _parentOptions(CategoryLookups lookups) {
+    final all = lookups.categories;
+    final byId = {for (final c in all) c.id: c};
+    String path(NamedRef c) {
+      final parts = <String>[c.name];
+      var pid = c.parentId;
+      final seen = <String>{};
+      while (pid != null && byId.containsKey(pid) && !seen.contains(pid)) {
+        seen.add(pid);
+        final p = byId[pid]!;
+        parts.insert(0, p.name);
+        pid = p.parentId;
       }
+      return parts.join(' › ');
     }
-    if (focusId == null) return const [];
-    return lookups.categories.where((c) => c.parentId == focusId).toList()
-      ..sort((a, b) => a.name.compareTo(b.name));
+
+    final opts = [
+      for (final c in all)
+        if (c.id != widget.categoryId) PickerOption(c.id, path(c)),
+    ]..sort((a, b) => a.label.compareTo(b.label));
+    return opts;
   }
 
   List<PickerOption> _refItems(List<NamedRef> refs) =>
