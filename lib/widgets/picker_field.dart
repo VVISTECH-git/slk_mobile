@@ -266,24 +266,34 @@ class _WheelPickerSheetState extends State<_WheelPickerSheet> {
                     builder: (context, i) {
                       final o = widget.options[i];
                       final selected = i == _idx;
-                      return Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (o.color != null) ...[
-                              _Swatch(color: o.color!, size: 22),
-                              const SizedBox(width: 10),
-                            ],
-                            Text(
-                              o.label,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight:
-                                    selected ? FontWeight.w700 : FontWeight.w400,
-                                color: selected ? p.primary : p.text,
-                              ),
+                      // Long labels (e.g. full saree names) scale down to fit
+                      // the wheel width so the WHOLE name stays visible instead
+                      // of being clipped at the edges.
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 22),
+                        child: Center(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (o.color != null) ...[
+                                  _Swatch(color: o.color!, size: 22),
+                                  const SizedBox(width: 10),
+                                ],
+                                Text(
+                                  o.label,
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight:
+                                        selected ? FontWeight.w700 : FontWeight.w400,
+                                    color: selected ? p.primary : p.text,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       );
                     },
