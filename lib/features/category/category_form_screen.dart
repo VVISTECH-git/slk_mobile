@@ -351,6 +351,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
   Widget _form(CategoryLookups lookups) {
     final codePreview =
         _code.text.trim().isNotEmpty ? _code.text.trim().toUpperCase() : _inheritedCode();
+    final isDesign = _levelWord() == 'design';
 
     return Form(
       key: _formKey,
@@ -402,6 +403,9 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
             ],
           ),
 
+          // Detailed sections only apply to a Design (the leaf). Groups and
+          // sub-groups are just folders — name + code + status.
+          if (isDesign) ...[
           const SizedBox(height: 22),
           _sectionLabel('Default attributes'),
           Text('Pieces in this design inherit these.',
@@ -579,6 +583,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
               style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
             ),
           ],
+          ], // end: design-only sections
 
           const SizedBox(height: 22),
           _sectionLabel('Status'),

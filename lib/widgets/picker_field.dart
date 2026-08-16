@@ -9,13 +9,13 @@ class PickerOption {
   final String label;
   final Color? color;
 
-  /// Secondary line shown only inside the dropdown (e.g. a full category path),
-  /// so the collapsed field can show just the short [label].
+  /// Secondary line shown below the wheel when this item is centred
+  /// (e.g. the full category path), so the wheel itself stays uncluttered.
   final String? subtitle;
 }
 
-/// A form-field-styled selector that opens a clean bottom-sheet picker instead
-/// of the default dropdown overlay. Used app-wide so every selector matches.
+/// A form-field-styled selector that opens an iOS-style drum-roll wheel
+/// picker instead of a flat list. Used app-wide so every selector matches.
 class PickerField extends StatelessWidget {
   const PickerField({
     super.key,
@@ -53,7 +53,7 @@ class PickerField extends StatelessWidget {
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          builder: (_) => _PickerSheet(
+          builder: (_) => _WheelPickerSheet(
             title: label,
             options: options,
             current: value,
@@ -94,14 +94,18 @@ class PickerField extends StatelessWidget {
   }
 }
 
+// ── Internal result ───────────────────────────────────────────────────────────
+
 class _PickResult {
   const _PickResult(this.value, {this.cleared = false});
   final String? value;
   final bool cleared;
 }
 
-class _PickerSheet extends StatelessWidget {
-  const _PickerSheet({
+// ── Wheel picker sheet ────────────────────────────────────────────────────────
+
+class _WheelPickerSheet extends StatefulWidget {
+  const _WheelPickerSheet({
     required this.title,
     required this.options,
     required this.current,
@@ -113,72 +117,196 @@ class _PickerSheet extends StatelessWidget {
   final bool allowClear;
 
   @override
+  State<_WheelPickerSheet> createState() => _WheelPickerSheetState();
+}
+
+class _WheelPickerSheetState extends State<_WheelPickerSheet> {
+  late final FixedExtentScrollController _ctrl;
+  late int _idx;
+
+  @override
+  void initState() {
+    super.initState();
+    _idx = widget.options.indexWhere((o) => o.value == widget.current);
+    if (_idx < 0) _idx = 0;
+    _ctrl = FixedExtentScrollController(initialItem: _idx);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  void _confirm() {
+    if (widget.options.isEmpty) {
+      Navigator.pop(context);
+      return;
+    }
+    Navigator.pop(context, _PickResult(widget.options[_idx].value));
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final p = context.p;
+    final opt = widget.options.isNotEmpty ? widget.options[_idx] : null;
+    final hasSubtitles = widget.options.any(
+      (o) => o.subtitle != null && o.subtitle!.isNotEmpty,
+    );
+
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 8),
-          // grabber
+
+          // Grabber
           Container(
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: context.p.border,
+              color: p.border,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
+
+          // Header: Cancel | Title | Clear/Done
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
+            padding: const EdgeInsets.fromLTRB(4, 10, 4, 4),
             child: Row(
               children: [
-                Expanded(
-                  child: Text(title,
-                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Cancel', style: TextStyle(color: p.textSecondary)),
                 ),
-                if (allowClear && current != null)
+                Expanded(
+                  child: Text(
+                    widget.title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                if (widget.allowClear && widget.current != null)
                   TextButton(
-                    onPressed: () => Navigator.pop(context, const _PickResult(null, cleared: true)),
+                    onPressed: () => Navigator.pop(
+                      context,
+                      const _PickResult(null, cleared: true),
+                    ),
+                    style: TextButton.styleFrom(foregroundColor: p.danger),
                     child: const Text('Clear'),
+                  )
+                else
+                  TextButton(
+                    onPressed: _confirm,
+                    child: Text(
+                      'Done',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: p.primary,
+                      ),
+                    ),
                   ),
               ],
             ),
           ),
+
           const Divider(height: 1),
-          Flexible(
-            child: ListView.builder(
-              shrinkWrap: true,
-              padding: const EdgeInsets.only(bottom: 8),
-              itemCount: options.length,
-              itemBuilder: (_, i) {
-                final o = options[i];
-                final selected = o.value == current;
-                return ListTile(
-                  leading: o.color != null ? _Swatch(color: o.color!, size: 22) : null,
-                  title: Text(o.label,
-                      style: TextStyle(
-                          fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                          color: selected ? context.p.primaryDark : context.p.text)),
-                  subtitle: (o.subtitle != null && o.subtitle!.isNotEmpty)
-                      ? Text(o.subtitle!,
-                          style: TextStyle(fontSize: 12, color: context.p.textSecondary))
-                      : null,
-                  trailing: selected ? Icon(Icons.check, color: context.p.primary) : null,
-                  onTap: () => Navigator.pop(context, _PickResult(o.value)),
-                );
-              },
+
+          // Subtitle hint — shows full category path for the centred item
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            child: (hasSubtitles && opt?.subtitle != null && opt!.subtitle!.isNotEmpty)
+                ? Padding(
+                    key: ValueKey(opt.subtitle),
+                    padding: const EdgeInsets.fromLTRB(24, 10, 24, 4),
+                    child: Text(
+                      opt.subtitle!,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 12, color: p.textSecondary),
+                    ),
+                  )
+                : const SizedBox(key: ValueKey('empty'), height: 14),
+          ),
+
+          // ── Wheel ─────────────────────────────────────────────────────────
+          SizedBox(
+            height: 216,
+            child: Stack(
+              children: [
+                // Selection highlight band (sits behind the wheel text)
+                Center(
+                  child: Container(
+                    height: 54,
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: p.primary.withValues(alpha: 0.07),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: p.primary.withValues(alpha: 0.22),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Wheel
+                ListWheelScrollView.useDelegate(
+                  controller: _ctrl,
+                  itemExtent: 54,
+                  physics: const FixedExtentScrollPhysics(),
+                  perspective: 0.002,
+                  magnification: 1.18,
+                  useMagnifier: true,
+                  overAndUnderCenterOpacity: 0.3,
+                  onSelectedItemChanged: (i) => setState(() => _idx = i),
+                  childDelegate: ListWheelChildBuilderDelegate(
+                    childCount: widget.options.length,
+                    builder: (context, i) {
+                      final o = widget.options[i];
+                      final selected = i == _idx;
+                      return Center(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (o.color != null) ...[
+                              _Swatch(color: o.color!, size: 22),
+                              const SizedBox(width: 10),
+                            ],
+                            Text(
+                              o.label,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight:
+                                    selected ? FontWeight.w700 : FontWeight.w400,
+                                color: selected ? p.primary : p.text,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
+
+          const SizedBox(height: 12),
         ],
       ),
     );
   }
 }
 
+// ── Swatch dot ────────────────────────────────────────────────────────────────
+
 class _Swatch extends StatelessWidget {
   const _Swatch({required this.color, this.size = 18});
   final Color color;
   final double size;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -192,6 +320,8 @@ class _Swatch extends StatelessWidget {
     );
   }
 }
+
+// ── Colour helpers ────────────────────────────────────────────────────────────
 
 /// Standard saree colour → swatch colour. Unknown names get a neutral dot.
 const Map<String, int> _colourHex = {

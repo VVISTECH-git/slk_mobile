@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -103,6 +104,87 @@ class _CategoryListScreenState extends ConsumerState<CategoryListScreen> {
     }
   }
 
+  // Lightweight create for a group / sub-group: just a name (+ optional code).
+  Future<void> _quickAdd(BuildContext context, String word) async {
+    final nameCtl = TextEditingController();
+    final codeCtl = TextEditingController();
+    final cap = '${word[0].toUpperCase()}${word.substring(1)}';
+    final created = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.p.surface2,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(left: 20, right: 20, top: 14, bottom: MediaQuery.of(ctx).viewInsets.bottom + 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(color: context.p.border, borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text('New $word', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 14),
+            TextField(
+              controller: nameCtl,
+              autofocus: true,
+              textCapitalization: TextCapitalization.words,
+              decoration: InputDecoration(labelText: '$cap name *'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: codeCtl,
+              textCapitalization: TextCapitalization.characters,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+                LengthLimitingTextInputFormatter(6),
+              ],
+              decoration: const InputDecoration(
+                labelText: 'Code (optional)',
+                helperText: 'Leave blank to inherit the parent\'s code',
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: () async {
+                final name = nameCtl.text.trim();
+                if (name.isEmpty) return;
+                try {
+                  await ref.read(categoryRepositoryProvider).create({
+                    'name': name,
+                    'parentId': widget.parentId,
+                    'code': codeCtl.text.trim(),
+                    'status': 'active',
+                  });
+                  if (ctx.mounted) Navigator.pop(ctx, true);
+                } catch (e) {
+                  if (ctx.mounted) {
+                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('$e')));
+                  }
+                }
+              },
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+                backgroundColor: context.p.primary,
+                foregroundColor: Colors.white,
+              ),
+              child: Text('Create $word'),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (created == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$cap created')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(categoriesProvider);
@@ -121,7 +203,15 @@ class _CategoryListScreenState extends ConsumerState<CategoryListScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          await context.push('/category/new', extra: {'parentId': widget.parentId});
+          final all = async.valueOrNull ?? const <CategoryRow>[];
+          final childDepth = _depthOf(all, widget.parentId) + 1;
+          if (childDepth <= 1) {
+            // Groups & sub-groups are just folders — quick name popup.
+            await _quickAdd(context, _childWord(all));
+          } else {
+            // A design needs the full form.
+            await context.push('/category/new', extra: {'parentId': widget.parentId});
+          }
           ref.invalidate(categoriesProvider);
         },
         backgroundColor: context.p.primary,
@@ -183,7 +273,7 @@ class _CategoryListScreenState extends ConsumerState<CategoryListScreen> {
           child: kids.isEmpty
               ? Center(
                   child: Text(
-                    _query.isEmpty ? 'Nothing here yet. Tap “New design”.' : 'No matches.',
+                    _query.isEmpty ? 'Nothing here yet. Tap ＋ to add.' : 'No matches.',
                     style: TextStyle(color: context.p.textSecondary),
                   ),
                 )
@@ -195,15 +285,25 @@ class _CategoryListScreenState extends ConsumerState<CategoryListScreen> {
                     separatorBuilder: (_, _) => const SizedBox(height: 8),
                     itemBuilder: (_, i) {
                       final c = kids[i];
-                      if (_hasChildren(all, c.id)) {
+                      // Groups (0) & sub-groups (1) are folders — always enterable,
+                      // even when empty. Designs (2+) open their detail form.
+                      final isFolder = _depthOf(all, c.id) < 2;
+                      if (isFolder) {
                         final n = _counts(all, c.id);
+                        final subtitle = (n.direct == 0 && n.leaves == 0)
+                            ? 'Empty — tap to open'
+                            : n.childrenAreFolders
+                                ? '${n.direct} sub-groups · ${n.leaves} designs'
+                                : '${n.leaves} designs';
                         return _FolderCard(
                           row: c,
-                          subtitle: n.childrenAreFolders
-                              ? '${n.direct} sub-groups · ${n.leaves} designs'
-                              : '${n.leaves} designs',
+                          subtitle: subtitle,
                           onTap: () async {
                             await context.push('/category/browse/${c.id}');
+                            ref.invalidate(categoriesProvider);
+                          },
+                          onEdit: () async {
+                            await context.push('/category/${c.id}/edit');
                             ref.invalidate(categoriesProvider);
                           },
                         );
@@ -226,10 +326,11 @@ class _CategoryListScreenState extends ConsumerState<CategoryListScreen> {
 
 // A drill-down node (has children) — folder row with counts and a chevron.
 class _FolderCard extends StatelessWidget {
-  const _FolderCard({required this.row, required this.subtitle, required this.onTap});
+  const _FolderCard({required this.row, required this.subtitle, required this.onTap, this.onEdit});
   final CategoryRow row;
   final String subtitle;
   final VoidCallback onTap;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -263,6 +364,12 @@ class _FolderCard extends StatelessWidget {
                   ],
                 ),
               ),
+              if (onEdit != null)
+                IconButton(
+                  tooltip: 'Edit',
+                  onPressed: onEdit,
+                  icon: Icon(Icons.edit_outlined, size: 20, color: context.p.textSecondary),
+                ),
               Icon(Icons.chevron_right, color: context.p.textSecondary),
             ],
           ),
