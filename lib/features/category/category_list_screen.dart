@@ -67,13 +67,13 @@ class _CategoryListScreenState extends ConsumerState<CategoryListScreen> {
   }
 
   String _titleFor(List<CategoryRow>? all) {
-    if (widget.parentId == null) return 'Design';
+    if (widget.parentId == null) return 'Catalogue';
     if (all != null) {
       for (final c in all) {
         if (c.id == widget.parentId) return c.name;
       }
     }
-    return 'Design';
+    return 'Catalogue';
   }
 
   // Depth of a node = number of ancestors above it (top-level = 0).

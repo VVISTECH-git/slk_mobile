@@ -18,7 +18,7 @@ class _Module {
 // Phase 1: focus on Category only. The rest are parked (hidden from Home, not
 // deleted) — uncomment to bring a module back.
 const _modules = [
-  _Module('Design', Icons.category_outlined, '/category'),
+  _Module('Catalogue', Icons.category_outlined, '/category'),
   _Module('Products', Icons.inventory_2_outlined, '/products'),
   _Module('Tag pieces', Icons.qr_code_2, '/tag', ownerOnly: true),
   _Module('Identify item', Icons.qr_code_scanner, '/scan'),
