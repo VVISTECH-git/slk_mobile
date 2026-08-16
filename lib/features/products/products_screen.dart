@@ -233,8 +233,11 @@ class _PieceCard extends StatelessWidget {
                   if (row.location != null && row.location!.isNotEmpty) ...[
                     Icon(Icons.place_outlined, size: 14, color: context.p.textSecondary),
                     const SizedBox(width: 3),
-                    Text(row.location!,
-                        style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
+                    Flexible(
+                      child: Text(row.location!,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
+                    ),
                   ],
                 ],
               ),

@@ -149,8 +149,11 @@ class _ProductRow extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Text(money(variant.price),
-                          style: TextStyle(fontWeight: FontWeight.w700, color: context.p.primaryDark)),
+                      Flexible(
+                        child: Text(money(variant.price),
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontWeight: FontWeight.w700, color: context.p.primaryDark)),
+                      ),
                       const SizedBox(width: 8),
                       Text('${variant.stock} in stock',
                           style: TextStyle(
@@ -230,17 +233,21 @@ class _CartBar extends ConsumerWidget {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('$units item${units == 1 ? '' : 's'}',
-                      style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
-                  Text(money(subtotal),
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.p.text)),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('$units item${units == 1 ? '' : 's'}',
+                        style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
+                    Text(money(subtotal),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.p.text)),
+                  ],
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               TextButton(onPressed: controller.clear, child: const Text('Clear')),
               const SizedBox(width: 8),
               FilledButton.icon(

@@ -197,7 +197,11 @@ class _InvoiceBody extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [Text(label, style: style), Text(value, style: style)],
+        children: [
+          Text(label, style: style),
+          const SizedBox(width: 8),
+          Flexible(child: Text(value, style: style, overflow: TextOverflow.ellipsis, textAlign: TextAlign.right)),
+        ],
       ),
     );
   }

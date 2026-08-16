@@ -178,9 +178,12 @@ class _PieceDetailScreenState extends ConsumerState<PieceDetailScreen> {
                         ),
                         const SizedBox(width: 8),
                       ],
-                      Text(
-                        [if (colour.isNotEmpty) colour, if (size.isNotEmpty) size].join(' · '),
-                        style: TextStyle(color: context.p.textSecondary, fontWeight: FontWeight.w600),
+                      Expanded(
+                        child: Text(
+                          [if (colour.isNotEmpty) colour, if (size.isNotEmpty) size].join(' · '),
+                          style: TextStyle(color: context.p.textSecondary, fontWeight: FontWeight.w600),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),
@@ -196,8 +199,11 @@ class _PieceDetailScreenState extends ConsumerState<PieceDetailScreen> {
                             fontSize: 22, fontWeight: FontWeight.w800, color: context.p.primaryDark)),
                     const SizedBox(width: 8),
                     if ((p['gstRate'] ?? '') != '')
-                      Text('incl. ${p['gstRate']}% GST',
-                          style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
+                      Flexible(
+                        child: Text('incl. ${p['gstRate']}% GST',
+                            style: TextStyle(fontSize: 12, color: context.p.textSecondary),
+                            overflow: TextOverflow.ellipsis),
+                      ),
                   ],
                 ),
                 const Divider(height: 26),

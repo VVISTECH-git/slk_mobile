@@ -86,8 +86,17 @@ class _Kpi extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.p.text)),
-              Text(label, style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(value,
+                    maxLines: 1,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.p.text)),
+              ),
+              Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
             ],
           ),
         ],
@@ -127,12 +136,15 @@ class _StockByLocation extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(children: [
-                Icon(m['type'] == 'warehouse' ? Icons.warehouse_outlined : Icons.storefront_outlined,
-                    size: 18, color: context.p.textSecondary),
-                const SizedBox(width: 8),
-                Text('${m['name']}'),
-              ]),
+              Expanded(
+                child: Row(children: [
+                  Icon(m['type'] == 'warehouse' ? Icons.warehouse_outlined : Icons.storefront_outlined,
+                      size: 18, color: context.p.textSecondary),
+                  const SizedBox(width: 8),
+                  Flexible(child: Text('${m['name']}', overflow: TextOverflow.ellipsis)),
+                ]),
+              ),
+              const SizedBox(width: 8),
               Text('${m['units']} units', style: const TextStyle(fontWeight: FontWeight.w700)),
             ],
           ),

@@ -419,22 +419,29 @@ class _CategoryCard extends StatelessWidget {
               ],
               const SizedBox(height: 10),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  _Pill(
-                    icon: Icons.inventory_2_outlined,
-                    text: '${row.pieceCount} piece${row.pieceCount == 1 ? '' : 's'}'
-                        '${row.colourCount > 0 ? ' · ${row.colourCount} colour${row.colourCount == 1 ? '' : 's'}' : ''}',
+                  // Pills wrap to a second line if they don't fit, so nothing
+                  // is ever pushed off the card edge.
+                  Expanded(
+                    child: Wrap(
+                      spacing: 10,
+                      runSpacing: 6,
+                      children: [
+                        _Pill(
+                          icon: Icons.inventory_2_outlined,
+                          text: '${row.pieceCount} piece${row.pieceCount == 1 ? '' : 's'}'
+                              '${row.colourCount > 0 ? ' · ${row.colourCount} colour${row.colourCount == 1 ? '' : 's'}' : ''}',
+                        ),
+                        if ((row.hsnCode ?? '').isNotEmpty)
+                          _Pill(icon: Icons.receipt_long_outlined, text: 'HSN ${row.hsnCode}'),
+                        if ((row.gstRate ?? '').isNotEmpty)
+                          _Pill(icon: Icons.percent, text: 'GST ${_gst(row.gstRate!)}%'),
+                      ],
+                    ),
                   ),
-                  if ((row.hsnCode ?? '').isNotEmpty) ...[
-                    const SizedBox(width: 8),
-                    _Pill(icon: Icons.receipt_long_outlined, text: 'HSN ${row.hsnCode}'),
-                  ],
-                  if ((row.gstRate ?? '').isNotEmpty) ...[
-                    const SizedBox(width: 8),
-                    _Pill(icon: Icons.percent, text: 'GST ${_gst(row.gstRate!)}%'),
-                  ],
-                  const Spacer(),
-                  // Jump straight to this category's photo guide.
+                  const SizedBox(width: 8),
+                  // Jump straight to this category's photo guide (pinned right).
                   InkWell(
                     borderRadius: BorderRadius.circular(20),
                     onTap: () => context.push('/category/${row.id}/photos', extra: {'name': row.name}),
