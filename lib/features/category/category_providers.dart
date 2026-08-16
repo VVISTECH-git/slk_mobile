@@ -15,6 +15,8 @@ class CategoryRow {
     required this.id,
     required this.name,
     required this.productCount,
+    this.pieceCount = 0,
+    this.colourCount = 0,
     required this.status,
     this.code,
     this.ownCode,
@@ -39,6 +41,8 @@ class CategoryRow {
   final String id;
   final String name;
   final int productCount;
+  final int pieceCount;
+  final int colourCount;
   final String status;
   final String? code;
   final String? ownCode;
@@ -63,6 +67,8 @@ class CategoryRow {
         id: j['id'] as String,
         name: (j['name'] ?? '') as String,
         productCount: (j['productCount'] as num?)?.toInt() ?? 0,
+        pieceCount: (j['pieceCount'] as num?)?.toInt() ?? 0,
+        colourCount: (j['colourCount'] as num?)?.toInt() ?? 0,
         status: (j['status'] ?? 'active') as String,
         code: j['code'] as String?,
         ownCode: j['ownCode'] as String?,

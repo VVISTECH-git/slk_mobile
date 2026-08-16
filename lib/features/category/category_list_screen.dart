@@ -288,7 +288,8 @@ class _CategoryCard extends StatelessWidget {
                 children: [
                   _Pill(
                     icon: Icons.inventory_2_outlined,
-                    text: '${row.productCount} product${row.productCount == 1 ? '' : 's'}',
+                    text: '${row.pieceCount} piece${row.pieceCount == 1 ? '' : 's'}'
+                        '${row.colourCount > 0 ? ' · ${row.colourCount} colour${row.colourCount == 1 ? '' : 's'}' : ''}',
                   ),
                   if ((row.hsnCode ?? '').isNotEmpty) ...[
                     const SizedBox(width: 8),
