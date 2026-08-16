@@ -369,6 +369,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
             ],
             decoration: InputDecoration(
               labelText: 'Code override (optional)',
+              helperMaxLines: 3,
               helperText: 'Leave blank to inherit the line\'s code (${_inheritedCode()}). '
                   'A–Z / 0–9, max 6.',
             ),

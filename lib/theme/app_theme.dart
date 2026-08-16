@@ -59,6 +59,9 @@ class SlkTheme {
         labelStyle: TextStyle(color: p.textSecondary, fontWeight: FontWeight.w600),
         hintStyle: TextStyle(color: p.textMuted),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        // Let helper/error text wrap instead of clipping with an ellipsis.
+        helperMaxLines: 3,
+        errorMaxLines: 3,
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
