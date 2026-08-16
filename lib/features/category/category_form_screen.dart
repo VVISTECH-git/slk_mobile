@@ -209,7 +209,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
       builder: (_) => AlertDialog(
         title: const Text('Delete design?'),
         content: Text('“${_name.text.trim()}” will be removed. This can\'t be undone.\n\n'
-            'Designs that still have products or sub-designs can\'t be deleted.'),
+            'A design with tagged pieces or sub-designs can\'t be deleted — remove those first.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           FilledButton(

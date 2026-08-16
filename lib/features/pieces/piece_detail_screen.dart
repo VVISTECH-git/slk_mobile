@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/picker_field.dart';
@@ -278,7 +282,17 @@ class _PieceDetailScreenState extends ConsumerState<PieceDetailScreen> {
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
                         letterSpacing: 0.5)),
-                const SizedBox(height: 6),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: () => _shareQr(code),
+                  icon: const Icon(Icons.share),
+                  label: const Text('Share QR image'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
                 const Text('Tap anywhere to close',
                     style: TextStyle(color: Colors.white70, fontSize: 12)),
               ],
@@ -287,6 +301,29 @@ class _PieceDetailScreenState extends ConsumerState<PieceDetailScreen> {
         ),
       ),
     );
+  }
+
+  // Render the QR to a white PNG and open the OS share sheet (WhatsApp, etc.).
+  Future<void> _shareQr(String code) async {
+    try {
+      final painter = QrPainter(
+        data: code,
+        version: QrVersions.auto,
+        gapless: false,
+        emptyColor: Colors.white,
+      );
+      final bytes = await painter.toImageData(720);
+      if (bytes == null) return;
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/$code.png');
+      await file.writeAsBytes(bytes.buffer.asUint8List());
+      await Share.shareXFiles([XFile(file.path)], text: code);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Could not share: $e')));
+      }
+    }
   }
 
   String _money(dynamic v) {

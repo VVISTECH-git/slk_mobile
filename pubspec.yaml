@@ -41,6 +41,10 @@ dependencies:
   # On-screen QR rendering (piece detail)
   qr_flutter: ^4.1.0
 
+  # Share a QR image to WhatsApp etc.
+  share_plus: ^10.1.4
+  path_provider: ^2.1.4
+
   # Misc UI helpers
   intl: ^0.19.0
 
