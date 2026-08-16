@@ -29,6 +29,7 @@ import 'features/dashboard/dashboard_screen.dart';
 import 'features/invoices/invoices_screen.dart';
 import 'features/reports/reconciliation_screen.dart';
 import 'features/settings/settings_screen.dart';
+import 'features/settings/master_data_screen.dart';
 import 'features/settings/photo_guide_screen.dart';
 import 'features/production/production_screen.dart';
 import 'features/production/batches_screen.dart';
@@ -166,6 +167,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/invoices', builder: (_, _) => const InvoicesScreen()),
       GoRoute(path: '/reports', builder: (_, _) => const ReconciliationScreen()),
       GoRoute(path: '/settings', builder: (_, _) => const SettingsScreen()),
+      GoRoute(path: '/master-data', builder: (_, _) => const MasterDataScreen()),
     ],
   );
 });

@@ -58,7 +58,11 @@ class HomeScreen extends ConsumerWidget {
           PopupMenuButton<String>(
             icon: const Icon(Icons.account_circle_outlined),
             onSelected: (v) {
-              if (v == 'logout') ref.read(authControllerProvider.notifier).signOut();
+              if (v == 'logout') {
+                ref.read(authControllerProvider.notifier).signOut();
+              } else if (v == 'settings') {
+                context.push('/settings');
+              }
             },
             itemBuilder: (_) => [
               PopupMenuItem(
@@ -73,6 +77,16 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
               const PopupMenuDivider(),
+              if (isOwner)
+                const PopupMenuItem(
+                  value: 'settings',
+                  child: ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.settings_outlined),
+                    title: Text('Settings'),
+                  ),
+                ),
               const PopupMenuItem(value: 'logout', child: Text('Sign out')),
             ],
           ),

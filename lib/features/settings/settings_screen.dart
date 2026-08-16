@@ -8,7 +8,7 @@ import '../../widgets/async_view.dart';
 import '../production/production_providers.dart';
 import '../pieces/piece_providers.dart';
 import 'business_edit_screen.dart';
-import 'photo_guide_screen.dart';
+import 'master_data_screen.dart';
 import 'settings_providers.dart';
 import 'staff_dialog.dart';
 
@@ -25,21 +25,6 @@ class SettingsScreen extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) showError(context, e);
     }
-  }
-
-  Future<String?> _promptName(BuildContext context, String title, {String hint = 'Name'}) {
-    final c = TextEditingController();
-    return showDialog<String>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(title),
-        content: TextField(controller: c, autofocus: true, decoration: InputDecoration(labelText: hint)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, c.text.trim()), child: const Text('Add')),
-        ],
-      ),
-    );
   }
 
   @override
@@ -60,8 +45,6 @@ class SettingsScreen extends ConsumerWidget {
           final business = (d['business'] as Map?)?.cast<String, dynamic>() ?? {};
           final staff = (d['staff'] as List?) ?? [];
           final stores = ((d['stores'] as List?) ?? []).cast<dynamic>();
-          final locations = (d['locations'] as List?) ?? [];
-          final categories = (d['categories'] as List?) ?? [];
 
           return ListView(
             padding: const EdgeInsets.all(16),
@@ -123,61 +106,22 @@ class SettingsScreen extends ConsumerWidget {
               }),
               const SizedBox(height: 20),
 
-              // ---- Locations ----
-              _SectionHeader('Locations', onAdd: () async {
-                final name = await _promptName(context, 'New location');
-                if (name != null && name.isNotEmpty) {
-                  await _guard(context, ref, () => _repo(ref).addLocation(name, 'retail'));
-                }
-              }),
-              ...locations.map((l) {
-                final m = (l as Map);
-                return _NamedRow(
-                  name: '${m['name']}',
-                  sub: '${m['type']} · ${m['inUse']} in use',
-                  onDelete: (m['inUse'] as num?) == 0
-                      ? () => _guard(context, ref, () => _repo(ref).deleteLocation(m['id'] as String))
-                      : null,
-                );
-              }),
-              const SizedBox(height: 20),
-
-              // ---- Categories ----
-              _SectionHeader('Designs & codes', onAdd: () async {
-                final name = await _promptName(context, 'New design');
-                if (name != null && name.isNotEmpty) {
-                  await _guard(context, ref, () => _repo(ref).addCategory(name, null));
-                }
-              }),
-              ...categories.map((c) {
-                final m = (c as Map);
-                void openGuide() => Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => PhotoGuideScreen(
-                        categoryId: m['id'] as String,
-                        categoryName: '${m['path'] ?? m['name']}',
-                      ),
-                    ));
-                return _NamedRow(
-                  name: '${m['path'] ?? m['name']}',
-                  sub: 'Code: ${m['code'] ?? '—'} · ${m['inUse']} in use · tap for photo guide',
-                  onTap: openGuide,
-                  leadingAction: IconButton(
-                    tooltip: 'Photo guide',
-                    icon: Icon(Icons.photo_camera_back_outlined, size: 20, color: context.p.primary),
-                    onPressed: openGuide,
+              // ---- Master data (locations + attribute lists) ----
+              _SectionHeader('Master data'),
+              Card(
+                child: ListTile(
+                  leading: Icon(Icons.dataset_outlined, color: context.p.primary),
+                  title: const Text('Locations, Fabrics, Techniques…'),
+                  subtitle: const Text(
+                    'Stores/warehouses & the lists designs pick from',
+                    style: TextStyle(fontSize: 12),
                   ),
-                  onDelete: (m['inUse'] as num?) == 0
-                      ? () => _guard(context, ref, () => _repo(ref).deleteCategory(m['id'] as String))
-                      : null,
-                );
-              }),
-              const SizedBox(height: 20),
-
-              // ---- Attributes ----
-              _AttrGroup(title: 'Fabrics', kind: 'fabric', rows: (d['fabrics'] as List?) ?? [], onChanged: () => ref.invalidate(settingsProvider)),
-              _AttrGroup(title: 'Techniques', kind: 'technique', rows: (d['techniques'] as List?) ?? [], onChanged: () => ref.invalidate(settingsProvider)),
-              _AttrGroup(title: 'Dye types', kind: 'dye', rows: (d['dyeTypes'] as List?) ?? [], onChanged: () => ref.invalidate(settingsProvider)),
-              _AttrGroup(title: 'Border styles', kind: 'border', rows: (d['borderStyles'] as List?) ?? [], onChanged: () => ref.invalidate(settingsProvider)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const MasterDataScreen()),
+                  ),
+                ),
+              ),
               const SizedBox(height: 20),
 
               // ---- Serialized stock ----
@@ -467,104 +411,30 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _NamedRow extends StatelessWidget {
-  const _NamedRow(
-      {required this.name, required this.sub, this.onDelete, this.onEdit, this.onTap, this.leadingAction});
+  const _NamedRow({required this.name, required this.sub, this.onDelete, this.onEdit});
   final String name;
   final String sub;
   final VoidCallback? onDelete;
   final VoidCallback? onEdit;
-  final VoidCallback? onTap;
-  final Widget? leadingAction; // shown before edit/delete (e.g. a photo-guide button)
   @override
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
         dense: true,
-        onTap: onTap,
         title: Text(name),
         subtitle: Text(sub, style: const TextStyle(fontSize: 12)),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (leadingAction != null) leadingAction!,
             if (onEdit != null)
               IconButton(onPressed: onEdit, icon: Icon(Icons.edit_outlined, size: 20, color: context.p.textSecondary)),
             if (onDelete != null)
               IconButton(onPressed: onDelete, icon: Icon(Icons.delete_outline, color: context.p.danger))
-            else if (onEdit == null && leadingAction == null)
+            else if (onEdit == null)
               Icon(Icons.lock_outline, size: 16, color: context.p.textSecondary),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _AttrGroup extends ConsumerWidget {
-  const _AttrGroup({required this.title, required this.kind, required this.rows, required this.onChanged});
-  final String title;
-  final String kind;
-  final List rows;
-  final VoidCallback onChanged;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return ExpansionTile(
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-      subtitle: Text('${rows.length} item${rows.length == 1 ? '' : 's'}'),
-      childrenPadding: const EdgeInsets.only(bottom: 8),
-      children: [
-        ...rows.map((r) {
-          final m = (r as Map);
-          return ListTile(
-            dense: true,
-            title: Text('${m['name']}'),
-            subtitle: Text('${m['inUse']} in use', style: const TextStyle(fontSize: 12)),
-            trailing: (m['inUse'] as num?) == 0
-                ? IconButton(
-                    icon: Icon(Icons.delete_outline, color: context.p.danger),
-                    onPressed: () async {
-                      try {
-                        await ref.read(settingsRepositoryProvider).deleteAttribute(kind, m['id'] as String);
-                        onChanged();
-                      } catch (e) {
-                        if (context.mounted) showError(context, e);
-                      }
-                    },
-                  )
-                : Icon(Icons.lock_outline, size: 16, color: context.p.textSecondary),
-          );
-        }),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton.icon(
-            icon: const Icon(Icons.add, size: 18),
-            label: Text('Add $title'),
-            onPressed: () async {
-              final c = TextEditingController();
-              final name = await showDialog<String>(
-                context: context,
-                builder: (_) => AlertDialog(
-                  title: Text('New ${title.toLowerCase()}'),
-                  content: TextField(controller: c, autofocus: true, decoration: const InputDecoration(labelText: 'Name')),
-                  actions: [
-                    TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-                    FilledButton(onPressed: () => Navigator.pop(context, c.text.trim()), child: const Text('Add')),
-                  ],
-                ),
-              );
-              if (name != null && name.isNotEmpty) {
-                try {
-                  await ref.read(settingsRepositoryProvider).addAttribute(kind, name);
-                  onChanged();
-                } catch (e) {
-                  if (context.mounted) showError(context, e);
-                }
-              }
-            },
-          ),
-        ),
-      ],
     );
   }
 }
