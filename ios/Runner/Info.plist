@@ -10,7 +10,7 @@
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
-		<string>Sree Lakshmi Kalamkari</string>
+		<string>SLK Mobile</string>
 		<key>NSCameraUsageDescription</key>
 		<string>Used to scan product barcodes and take product photos.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
