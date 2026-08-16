@@ -52,7 +52,7 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sree Lakshmi Kalamkari'),
+        title: const Text('SLK Mobile'),
         actions: [
           const ThemeButton(),
           PopupMenuButton<String>(

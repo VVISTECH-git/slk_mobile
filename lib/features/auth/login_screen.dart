@@ -210,7 +210,7 @@ class _Brand extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        Text('Sree Lakshmi Kalamkari',
+        Text('SLK Mobile',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.p.primaryDark)),
       ],

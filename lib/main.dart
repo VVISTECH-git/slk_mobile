@@ -16,7 +16,7 @@ class SlkApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
     final theme = ref.watch(themeControllerProvider);
     return MaterialApp.router(
-      title: 'Sree Lakshmi Kalamkari',
+      title: 'SLK Mobile',
       debugShowCheckedModeBanner: false,
       theme: theme.toThemeData(),
       routerConfig: router,
