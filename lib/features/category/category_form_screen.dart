@@ -156,6 +156,39 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
     return d == d.roundToDouble() ? d.toInt().toString() : d.toString();
   }
 
+  // What this record is, by depth: 0 = group, 1 = sub-group, 2+ = design.
+  String _levelWord() {
+    final all = ref.read(categoriesProvider).valueOrNull ?? const <CategoryRow>[];
+    final byId = {for (final c in all) c.id: c};
+    int depthOf(String? id) {
+      if (id == null) return -1;
+      var d = 0;
+      var cur = byId[id]?.parentId;
+      final seen = <String>{};
+      while (cur != null && byId.containsKey(cur) && !seen.contains(cur)) {
+        seen.add(cur);
+        d++;
+        cur = byId[cur]!.parentId;
+      }
+      return d;
+    }
+
+    final level = widget.isEdit ? depthOf(widget.categoryId) : depthOf(_parentId) + 1;
+    switch (level) {
+      case 0:
+        return 'group';
+      case 1:
+        return 'sub-group';
+      default:
+        return 'design';
+    }
+  }
+
+  String get _levelCap {
+    final w = _levelWord();
+    return w[0].toUpperCase() + w.substring(1);
+  }
+
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _saving = true);
@@ -191,7 +224,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(widget.isEdit ? 'Design updated' : 'Design created')),
+        SnackBar(content: Text('$_levelCap ${widget.isEdit ? 'updated' : 'created'}')),
       );
       context.pop();
     } catch (e) {
@@ -207,7 +240,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Delete design?'),
+        title: Text('Delete ${_levelWord()}?'),
         content: Text('“${_name.text.trim()}” will be removed. This can\'t be undone.\n\n'
             'A design with tagged pieces or sub-designs can\'t be deleted — remove those first.'),
         actions: [
@@ -225,7 +258,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
     try {
       await ref.read(categoryRepositoryProvider).delete(widget.categoryId!);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Design deleted')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$_levelCap deleted')));
       context.pop();
     } catch (e) {
       if (!mounted) return;
@@ -243,7 +276,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isEdit ? 'Edit design' : 'New design'),
+        title: Text('${widget.isEdit ? 'Edit' : 'New'} ${_levelWord()}'),
         actions: [
           if (widget.isEdit && isOwner)
             IconButton(
@@ -334,7 +367,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
         children: [
           _sectionLabel('Classification'),
           _dropdown(
-            label: kCategoryFocus != null ? 'Sub-design (under $kCategoryFocus)' : 'Parent design',
+            label: kCategoryFocus != null ? 'Parent (under $kCategoryFocus)' : 'Parent group',
             value: _parentId,
             options: kCategoryFocus != null
                 ? [
@@ -355,7 +388,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
           TextFormField(
             controller: _name,
             textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(labelText: 'Design name *'),
+            decoration: InputDecoration(labelText: '$_levelCap name *'),
             validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
             onChanged: (_) => setState(() {}), // refresh the SKU preview
           ),
@@ -585,7 +618,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
                 ? const SizedBox(
                     width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.check),
-            label: Text(widget.isEdit ? 'Save changes' : 'Create design'),
+            label: Text(widget.isEdit ? 'Save changes' : 'Create ${_levelWord()}'),
             style: FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(50),
               backgroundColor: context.p.primary,

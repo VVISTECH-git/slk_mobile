@@ -76,6 +76,33 @@ class _CategoryListScreenState extends ConsumerState<CategoryListScreen> {
     return 'Design';
   }
 
+  // Depth of a node = number of ancestors above it (top-level = 0).
+  int _depthOf(List<CategoryRow> all, String? id) {
+    if (id == null) return -1;
+    final byId = {for (final c in all) c.id: c};
+    var d = 0;
+    var cur = byId[id]?.parentId;
+    final seen = <String>{};
+    while (cur != null && byId.containsKey(cur) && !seen.contains(cur)) {
+      seen.add(cur);
+      d++;
+      cur = byId[cur]!.parentId;
+    }
+    return d;
+  }
+
+  // What the items created/listed at THIS level are called.
+  String _childWord(List<CategoryRow> all) {
+    switch (_depthOf(all, widget.parentId) + 1) {
+      case 0:
+        return 'group';
+      case 1:
+        return 'sub-group';
+      default:
+        return 'design';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(categoriesProvider);
@@ -100,7 +127,7 @@ class _CategoryListScreenState extends ConsumerState<CategoryListScreen> {
         backgroundColor: context.p.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
-        label: const Text('New design'),
+        label: Text('New ${_childWord(async.valueOrNull ?? const [])}'),
       ),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -173,7 +200,7 @@ class _CategoryListScreenState extends ConsumerState<CategoryListScreen> {
                         return _FolderCard(
                           row: c,
                           subtitle: n.childrenAreFolders
-                              ? '${n.direct} groups · ${n.leaves} designs'
+                              ? '${n.direct} sub-groups · ${n.leaves} designs'
                               : '${n.leaves} designs',
                           onTap: () async {
                             await context.push('/category/browse/${c.id}');
