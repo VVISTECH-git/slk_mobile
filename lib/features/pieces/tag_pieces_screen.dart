@@ -289,8 +289,15 @@ class _TagPiecesScreenState extends ConsumerState<TagPiecesScreen> {
       return parts.join(' › ');
     }
 
-    final opts = [for (final c in cats) PickerOption((c as Map)['id'] as String, path(c))];
-    opts.sort((a, b) => a.label.compareTo(b.label));
+    final opts = [
+      for (final c in cats)
+        PickerOption(
+          (c as Map)['id'] as String,
+          c['name'] as String, // field shows the design name only
+          subtitle: path(c), // full path shown inside the dropdown
+        )
+    ];
+    opts.sort((a, b) => (a.subtitle ?? a.label).compareTo(b.subtitle ?? b.label));
     return opts;
   }
 

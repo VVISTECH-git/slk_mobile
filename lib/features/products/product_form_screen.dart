@@ -280,9 +280,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       return parts.join(' › ');
     }
 
-    final items = cats.map((c) => (id: c['id'] as String, label: path(c as Map))).toList()
-      ..sort((a, b) => a.label.compareTo(b.label));
-    return [for (final e in items) PickerOption(e.id, e.label)];
+    final items = cats
+        .map((c) => (id: c['id'] as String, name: (c as Map)['name'] as String, path: path(c)))
+        .toList()
+      ..sort((a, b) => a.path.compareTo(b.path));
+    // Field shows the design name; the full path is a sub-line in the dropdown.
+    return [for (final e in items) PickerOption(e.id, e.name, subtitle: e.path)];
   }
 
   Future<void> _save(List<Map<String, dynamic>> locations) async {

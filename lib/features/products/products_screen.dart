@@ -227,7 +227,7 @@ class _PieceCard extends StatelessWidget {
                   ],
                   Expanded(
                     child: Text(meta.isEmpty ? row.productCode : meta,
-                        overflow: TextOverflow.ellipsis,
+                        softWrap: true,
                         style: TextStyle(fontSize: 12, color: context.p.textSecondary)),
                   ),
                   if (row.location != null && row.location!.isNotEmpty) ...[

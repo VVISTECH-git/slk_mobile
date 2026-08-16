@@ -4,10 +4,14 @@ import '../theme/app_theme.dart';
 
 /// One selectable option. [color] renders a swatch dot (used for colours).
 class PickerOption {
-  const PickerOption(this.value, this.label, {this.color});
+  const PickerOption(this.value, this.label, {this.color, this.subtitle});
   final String value;
   final String label;
   final Color? color;
+
+  /// Secondary line shown only inside the dropdown (e.g. a full category path),
+  /// so the collapsed field can show just the short [label].
+  final String? subtitle;
 }
 
 /// A form-field-styled selector that opens a clean bottom-sheet picker instead
@@ -74,6 +78,8 @@ class PickerField extends StatelessWidget {
             Expanded(
               child: Text(
                 sel?.label ?? (hint ?? 'Select'),
+                maxLines: 2,
+                softWrap: true,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: sel == null ? context.p.textMuted : context.p.text,
@@ -153,6 +159,10 @@ class _PickerSheet extends StatelessWidget {
                       style: TextStyle(
                           fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                           color: selected ? context.p.primaryDark : context.p.text)),
+                  subtitle: (o.subtitle != null && o.subtitle!.isNotEmpty)
+                      ? Text(o.subtitle!,
+                          style: TextStyle(fontSize: 12, color: context.p.textSecondary))
+                      : null,
                   trailing: selected ? Icon(Icons.check, color: context.p.primary) : null,
                   onTap: () => Navigator.pop(context, _PickResult(o.value)),
                 );

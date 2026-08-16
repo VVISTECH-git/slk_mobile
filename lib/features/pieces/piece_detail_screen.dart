@@ -75,28 +75,41 @@ class _PieceDetailScreenState extends ConsumerState<PieceDetailScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Scannable QR for this piece.
+        // Scannable QR for this piece — tap to enlarge.
         Center(
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: context.p.border),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                QrImageView(
-                  data: '${p['tagCode']}',
-                  version: QrVersions.auto,
-                  size: 180,
-                  gapless: false,
-                ),
-                const SizedBox(height: 8),
-                Text('${p['tagCode']}',
-                    style: const TextStyle(fontWeight: FontWeight.w700, letterSpacing: 0.5)),
-              ],
+          child: GestureDetector(
+            onTap: () => _showQrPopup(context, '${p['tagCode']}'),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: context.p.border),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  QrImageView(
+                    data: '${p['tagCode']}',
+                    version: QrVersions.auto,
+                    size: 180,
+                    gapless: false,
+                  ),
+                  const SizedBox(height: 8),
+                  Text('${p['tagCode']}',
+                      style: const TextStyle(fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.zoom_out_map, size: 13, color: context.p.textMuted),
+                      const SizedBox(width: 4),
+                      Text('Tap to enlarge',
+                          style: TextStyle(fontSize: 11, color: context.p.textMuted)),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -224,6 +237,55 @@ class _PieceDetailScreenState extends ConsumerState<PieceDetailScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  // Full-screen QR lightbox — tap anywhere to close.
+  void _showQrPopup(BuildContext context, String code) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (ctx) => GestureDetector(
+        onTap: () => Navigator.of(ctx).pop(),
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: LayoutBuilder(
+                    builder: (_, c) {
+                      final side = MediaQuery.of(ctx).size.width * 0.72;
+                      return QrImageView(
+                        data: code,
+                        version: QrVersions.auto,
+                        size: side.clamp(220.0, 420.0),
+                        gapless: false,
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(code,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        letterSpacing: 0.5)),
+                const SizedBox(height: 6),
+                const Text('Tap anywhere to close',
+                    style: TextStyle(color: Colors.white70, fontSize: 12)),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
