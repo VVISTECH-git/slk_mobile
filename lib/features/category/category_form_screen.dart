@@ -622,6 +622,36 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
   List<PickerOption> _parentOptions(CategoryLookups lookups) {
     final all = lookups.categories;
     final byId = {for (final c in all) c.id: c};
+
+    // Depth: group = 0, sub-group = 1, design = 2. Only folders (depth < 2) can
+    // be a parent — a design is a leaf and can never contain sub-categories.
+    int depthOf(String? id) {
+      var d = 0;
+      var pid = byId[id]?.parentId;
+      final seen = <String>{};
+      while (pid != null && byId.containsKey(pid) && !seen.contains(pid)) {
+        seen.add(pid);
+        d++;
+        pid = byId[pid]!.parentId;
+      }
+      return d;
+    }
+
+    // Would choosing `id` as the parent create a cycle? (id is self or under self.)
+    bool underSelf(String id) {
+      if (widget.categoryId == null) return false;
+      var cur = id;
+      final seen = <String>{};
+      while (!seen.contains(cur)) {
+        if (cur == widget.categoryId) return true;
+        seen.add(cur);
+        final pid = byId[cur]?.parentId;
+        if (pid == null) return false;
+        cur = pid;
+      }
+      return false;
+    }
+
     String path(NamedRef c) {
       final parts = <String>[c.name];
       var pid = c.parentId;
@@ -637,8 +667,11 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
 
     final opts = [
       for (final c in all)
-        if (c.id != widget.categoryId) PickerOption(c.id, path(c)),
-    ]..sort((a, b) => a.label.compareTo(b.label));
+        if (c.id != widget.categoryId && depthOf(c.id) < 2 && !underSelf(c.id))
+          // Wheel shows the short name; the full path is the subtitle (so two
+          // same-named sub-groups are still distinguishable).
+          PickerOption(c.id, c.name, subtitle: path(c)),
+    ]..sort((a, b) => (a.subtitle ?? a.label).compareTo(b.subtitle ?? b.label));
     return opts;
   }
 
